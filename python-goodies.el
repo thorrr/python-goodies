@@ -414,4 +414,8 @@ Overridden from Gallina - his doesn't work with win32"
                     virtualenv-bin-dir)
             path))))
 
+(defadvice python-eldoc--get-doc-at-point (around python-eldoc--get-doc-at-point-around activate)
+  (let ((force-process (python-get-named-else-internal-process)))
+    ad-do-it))
+
 (provide 'python-goodies)
