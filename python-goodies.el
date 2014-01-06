@@ -130,7 +130,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (add-hook 'python-mode-hook (lambda ()
-  (setq foobar 't) 
   (set-variable 'python-indent-offset 4)
   (set-variable 'indent-tabs-mode nil)
   (setq ropemacs-enable-autoimport t)
