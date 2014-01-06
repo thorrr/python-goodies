@@ -145,7 +145,9 @@
   ;; Set up each file's virtualenv before calling python-just-source-file so that each virtualenv
   ;; will have a single internal process
   (virtualenv-hook)
-  (python-just-source-file (buffer-file-name) (python-shell-internal-get-or-create-process))
+  (python-just-source-file
+   (buffer-file-name)
+   (python-shell-send-setup-code-to-process (python-shell-internal-get-or-create-process)))
   (project-root-fetch)
   (setq ropemacs-guess-project (cdr project-details));;get all of the python subdirectories
   (local-set-key [S-f10] 'my-python-run-test-in-inferior-buffer)
@@ -197,9 +199,9 @@ start an internal process and return that."
              (internal-process (if internal-process-state (get-process (python-shell-internal-get-process-name))
                                  nil))
              (existing-process (if global-process global-process internal-process))
-             (process (if (not existing-process)
-                          (progn (message "Starting inferior, unnamed Python process.")
-                                 (python-shell-internal-get-or-create-process))
+             (process (if (not existing-process) (progn
+                          (message "Starting inferior, unnamed Python process.")
+                          (python-shell-send-setup-code-to-process (python-shell-internal-get-or-create-process)))
                         existing-process)))
         process))
 
@@ -417,5 +419,16 @@ Overridden from Gallina - his doesn't work with win32"
 (defadvice python-eldoc--get-doc-at-point (around python-eldoc--get-doc-at-point-around activate)
   (let ((force-process (python-get-named-else-internal-process)))
     ad-do-it))
+
+(defun python-shell-send-setup-code-to-process (process)
+  "Gallina's python-shell-send-setup-code doesn't allow a buffer
+argument"
+  (let* ((orig (symbol-function 'get-buffer-process))
+         (fn (lambda (_) process)))
+    (fset 'get-buffer-process fn)
+    (python-shell-send-setup-code)
+    (fset 'get-buffer-process orig)
+    process))
+
 
 (provide 'python-goodies)
