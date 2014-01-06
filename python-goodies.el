@@ -125,6 +125,8 @@
   (setq flymake-warn-line-regexp "imported but unused\\|unable to detect undefined names")
   (setq flymake-info-line-regexp "is assigned to but never used")))
 
+(add-hook 'python-mode-hook 'turn-on-eldoc-mode)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Hooks - loading a python file
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
