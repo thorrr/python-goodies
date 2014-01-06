@@ -345,7 +345,7 @@ current-dir fn-or-subdir) exists.
   fn-or-subdir can be a filename (\"env\" for example) or a
 function that takes a single argument "
   (defun parent-directory (dir)
-    (unless (equal "/" dir)
+    (unless (string-match "^\\([a-z]:\\)*/" dir)
       (file-name-directory (directory-file-name dir))))
   
   (let* ((f (if (functionp fn-or-subdir)
