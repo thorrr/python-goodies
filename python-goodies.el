@@ -7,7 +7,7 @@
 (add-hook 'python-mode-hook (lambda ()
   (define-key python-mode-map (kbd "C-M-<return>") 'my-python-send-buffer)
   (define-key python-mode-map (kbd "M-.") 'my-rope-goto-definition)
-  (define-key python-mode-map (kbd "M-l") 'my-rope-go-backward)
+  (define-key python-mode-map (kbd "M-,") 'my-rope-go-backward)
   (define-key python-mode-map (kbd "M-i") 'my-python-shell-smart-switch)
   (define-key python-mode-map (kbd "C-c C-j") 'my-python-eval-line)
   (define-key python-mode-map (kbd "S-<f4>") 'my-restart-python)
