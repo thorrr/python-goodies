@@ -26,18 +26,6 @@
   (define-key ropemacs-local-keymap (kbd "M-/") 'hippie-expand)
 ))
 
-;;first attempt at ctrl-click
-(global-set-key [C-down-mouse-1]
-                (lambda (click)
-                  (interactive "e")
-                  (mouse-minibuffer-check click)
-                  (let* ((window (posn-window (event-start click)))
-                         (buf (window-buffer window)))
-                    (with-current-buffer buf
-                      (save-excursion
-                        (goto-char (posn-point (event-start click)))
-                        (my-rope-goto-definition))))))
-
 ;; can't use python-shell-extra-pythonpaths because these have to be set before we require 'pymacs
 (setenv "PYTHONPATH" (concat
   (concat shared-externals "Pymacs" path-separator)
