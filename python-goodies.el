@@ -296,8 +296,6 @@ start an internal process and return that."
   "Set up python-shell-interpreter-args-var correctly to
 use ipython with the current virtualenv")
 
-(defconst virtualenv-bin-dir (if (eq system-type 'windows-nt) "Scripts" "bin"))
-
 (defun set-current-virtualenv (dir)
   (interactive "D")
   (setq current-virtualenv (expand-file-name dir))
@@ -313,7 +311,7 @@ use ipython with the current virtualenv")
   python file has a virtualenv in its path"
   (ldf-compat (file-name-directory filename)
    (lambda (cd)
-     (let* ((dirlist `("." ".." ,virtualenv-bin-dir  "include" "lib" "local" "share"))
+     (let* ((dirlist `("." ".." "bin"  "include" "lib"))
             (ls (mapcar (lambda (f) (concat cd f)) (directory-files cd)))
             (subdir-p (lambda (dir) (if (file-directory-p dir) dir nil)))
             (subdirs (delq nil (mapcar subdir-p ls)))
@@ -322,7 +320,8 @@ use ipython with the current virtualenv")
               (if (equal (sort subdir-ls-elem 'string=) (sort dirlist 'string=)) 't nil)) subdir-ls))
             (l (length (memq t subdir-match)))
             (vd (if (zerop l) nil (nth (- (length subdirs) l) subdirs)))
-            (virtualenv-dir (if vd (file-name-as-directory vd) nil)))
+            (virtualenv-dir (if vd (file-name-as-directory vd) nil))
+            (debug))
        (if virtualenv-dir (progn
          (message (concat "Found " virtualenv-dir " as virtualenv for " filename))
          virtualenv-dir) nil)))))
@@ -363,46 +362,6 @@ run"
     (if ipython-use-with-virtualenv
         (setq python-shell-interpreter-args
               (concat "-u " (expand-file-name "ipython-script.py" (format "%s/%s" used-virtualenv virtualenv-bin-dir)))))))
-
-(defun python-shell-calculate-process-environment ()
-  "Calculate process environment given `python-shell-virtualenv-path'.
-Overridden from Gallina - his doesn't work with win32"
-  
-  (let ((process-environment (append
-                              python-shell-process-environment
-                              process-environment nil))
-        (virtualenv (if python-shell-virtualenv-path
-                        (directory-file-name python-shell-virtualenv-path)
-                      nil)))
-    (when python-shell-extra-pythonpaths
-      (setenv "PYTHONPATH"
-              (format "%s%s%s"
-                      (mapconcat 'identity
-                                 python-shell-extra-pythonpaths
-                                 path-separator)
-                      path-separator
-                      (or (getenv "PYTHONPATH") ""))))
-    (if (not virtualenv)
-        process-environment
-      (setenv "PYTHONHOME" nil)
-      (setenv "PATH" (format "%s/%s%s%s"
-                             virtualenv virtualenv-bin-dir
-                             path-separator
-                             (or (getenv "PATH") "")))
-      (setenv "VIRTUAL_ENV" virtualenv))
-    process-environment))
-
-(defun python-shell-calculate-exec-path ()
-  "Calculate exec path given `python-shell-virtualenv-path'.
-Overridden from Gallina - his doesn't work with win32"
-  (let ((path (append python-shell-exec-path
-                      exec-path nil)))
-    (if (not python-shell-virtualenv-path)
-        path
-      (cons (format "%s/%s"
-                    (directory-file-name python-shell-virtualenv-path)
-                    virtualenv-bin-dir)
-            path))))
 
 (defadvice python-eldoc--get-doc-at-point (around python-eldoc--get-doc-at-point-around activate)
   (let ((force-process (python-get-named-else-internal-process)))
