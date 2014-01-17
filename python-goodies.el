@@ -351,6 +351,7 @@ run"
                ('t
                 python-shell-virtualenv-path))))
     (setq python-shell-virtualenv-path used-virtualenv)
+    (setq python-shell-extra-pythonpaths '("/cygdrive/c/Users/xbbllhr/projects/virtualenv-test/env/lib/python2.7/site-packages"))
     (if ipython-use-with-virtualenv
         (setq python-shell-interpreter-args
               (concat "-u " (expand-file-name "ipython-script.py" (format "%s/%s" used-virtualenv virtualenv-bin-dir)))))))
