@@ -350,15 +350,13 @@ run"
                 ('t
                  python-shell-virtualenv-path)))
          (cygpath-output (shell-command-to-string (concat  "cygpath -u " used-virtualenv)))
-         (cygwin-path (replace-regexp-in-string "\\\n" "" cygpath-output))
+         (cygwin-used-virtualenv (replace-regexp-in-string "\\\n" "" cygpath-output))
          )
     (setq python-shell-virtualenv-path used-virtualenv)
     (if (eq system-type 'windows-nt) (progn
         (setq-local python-shell-completion-setup-code
           (concat python-shell-completion-setup-code "\n"
-                  "execfile(\"" used-virtualenv "bin/activate_this.py\", dict(__file__=\"" used-virtualenv "bin/activate_this.py\"" "))" ))
-        ;;we can't use python-shell-extra-pythonpaths because path-separator breaks on cygwin python
-        (setenv "PYTHONPATH" (concat cygwin-path "lib/python2.7/site-packages" path-separator (getenv "PYTHONPATH")))))
+                  "execfile(\"" cygwin-used-virtualenv "bin/activate_this.py\", dict(__file__=\"" cygwin-used-virtualenv "bin/activate_this.py\"" "))" ))))
     (if ipython-use-with-virtualenv
         (setq python-shell-interpreter-args
               (concat "-u " (expand-file-name "ipython-script.py" (format "%s/%s" used-virtualenv virtualenv-bin-dir)))))))
