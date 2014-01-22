@@ -312,8 +312,7 @@ use ipython with the current virtualenv")
               (if (equal (sort subdir-ls-elem 'string=) (sort dirlist 'string=)) 't nil)) subdir-ls))
             (l (length (memq t subdir-match)))
             (vd (if (zerop l) nil (nth (- (length subdirs) l) subdirs)))
-            (virtualenv-dir (if vd (file-name-as-directory vd) nil))
-            (debug))
+            (virtualenv-dir (if vd (file-name-as-directory vd) nil)))
        (if virtualenv-dir (progn
          (message (concat "Found " virtualenv-dir " as virtualenv for " filename))
          virtualenv-dir) nil)))))
@@ -328,7 +327,7 @@ current-dir fn-or-subdir) exists.
   fn-or-subdir can be a filename (\"env\" for example) or a
 function that takes a single argument "
   (defun parent-directory (dir)
-    (unless (string-match "^\\([a-z]:\\)*/" dir)
+    (unless (string-match "^\\([a-z]:\\)*/$" dir)
       (file-name-directory (directory-file-name dir))))
   
   (let* ((f (if (functionp fn-or-subdir)
@@ -359,7 +358,7 @@ run"
           (concat python-shell-completion-setup-code "\n"
                   "execfile(\"" used-virtualenv "bin/activate_this.py\", dict(__file__=\"" used-virtualenv "bin/activate_this.py\"" "))" ))
         ;;we can't use python-shell-extra-pythonpaths because path-separator breaks on cygwin python
-        (setenv "PYTHONPATH" (concat cygwin-path "lib/python2.7/site-packages") path-separator (getenv "PYTHONPATH"))))
+        (setenv "PYTHONPATH" (concat cygwin-path "lib/python2.7/site-packages" path-separator (getenv "PYTHONPATH")))))
     (if ipython-use-with-virtualenv
         (setq python-shell-interpreter-args
               (concat "-u " (expand-file-name "ipython-script.py" (format "%s/%s" used-virtualenv virtualenv-bin-dir)))))))
