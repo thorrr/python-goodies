@@ -128,8 +128,7 @@
   (python-just-source-file
    (buffer-file-name)
    (python-shell-send-setup-code-to-process (python-shell-internal-get-or-create-process)))
-  (project-root-fetch)
-  (setq ropemacs-guess-project (cdr project-details));;get all of the python subdirectories
+  ;;(setq ropemacs-guess-project (cdr project-details));;get all of the python subdirectories
   (local-set-key [S-f10] 'my-python-run-test-in-inferior-buffer)
   (local-set-key [f10] 'my-python-toggle-test-implementation)
   (my-turn-on-ropemacs) ;;something repeatedly calls pymacs-load "ropemacs" so you have to switch it back on
