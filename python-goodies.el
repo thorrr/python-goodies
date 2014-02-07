@@ -382,5 +382,11 @@ argument"
     (fset 'get-buffer-process orig)
     process))
 
+(defun pymacs-reload-rope () 
+    "Reload rope"
+    (interactive)
+    (pymacs-terminate-services )
+    (pymacs-load "ropemacs" "rope-"))
+
 
 (provide 'python-goodies)
