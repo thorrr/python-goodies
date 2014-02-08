@@ -310,16 +310,14 @@ use ipython with the current virtualenv")
   python file has a virtualenv in its path"
   (ldf-compat (file-name-directory filename)
    (lambda (cd)
-     (let* ((dirlist `("." ".." "bin"  "include" "lib"))
+     (let* ((subdir-p (lambda (dir) (if (file-directory-p dir) dir nil)))
             (ls (mapcar (lambda (f) (concat cd f)) (directory-files cd)))
-            (subdir-p (lambda (dir) (if (file-directory-p dir) dir nil)))
             (subdirs (delq nil (mapcar subdir-p ls)))
-            (subdir-ls (mapcar (lambda (dir) (ignore-errors (directory-files dir))) subdirs))
-            (subdir-match (mapcar (lambda (subdir-ls-elem)
-              (if (equal (sort subdir-ls-elem 'string=) (sort dirlist 'string=)) 't nil)) subdir-ls))
-            (l (length (memq t subdir-match)))
-            (vd (if (zerop l) nil (nth (- (length subdirs) l) subdirs)))
-            (virtualenv-dir (if vd (file-name-as-directory vd) nil)))
+            (subdirs-that-have-bin/python (delq nil (mapcar (lambda (dir)
+              (if (file-regular-p (concat dir "/bin/python"))
+                  dir nil))
+                 subdirs)))
+            (virtualenv-dir (car subdirs-that-have-bin/python)))
        (if virtualenv-dir (progn
          (message (concat "Found " virtualenv-dir " as virtualenv for " filename))
          virtualenv-dir) nil)))))
@@ -355,15 +353,16 @@ run"
                  (detect-virtualenv (buffer-file-name)))
                 (current-virtualenv current-virtualenv)
                 ('t
-                 python-shell-virtualenv-path)))
-         (cygpath-output (shell-command-to-string (concat  "cygpath -u " used-virtualenv)))
-         (cygwin-used-virtualenv (replace-regexp-in-string "\\\n" "" cygpath-output))
-         )
+                 python-shell-virtualenv-path))))
     (setq python-shell-virtualenv-path used-virtualenv)
-    (if (eq system-type 'windows-nt) (progn
-        (setq-local python-shell-completion-setup-code
-          (concat python-shell-completion-setup-code "\n"
-                  "execfile(\"" cygwin-used-virtualenv "bin/activate_this.py\", dict(__file__=\"" cygwin-used-virtualenv "bin/activate_this.py\"" "))" ))))
+    (if (eq system-type 'windows-nt)
+      (let* ((cygpath-output (shell-command-to-string (concat  "cygpath -u " used-virtualenv)))
+             (cygwin-used-virtualenv (replace-regexp-in-string "\\\n" "" cygpath-output)))
+        (make-local-variable 'python-shell-completion-setup-code)
+        (setq python-shell-completion-setup-code
+              (concat python-shell-completion-setup-code "\n"
+                    "execfile(\"" cygwin-used-virtualenv "bin/activate_this.py\", dict(__file__=\"" cygwin-used-virtualenv "bin/activate_this.py\"" "))" ))))
+    
     (if ipython-use-with-virtualenv
         (setq python-shell-interpreter-args
               (concat "-u " (expand-file-name "ipython-script.py" (format "%s/%s" used-virtualenv virtualenv-bin-dir)))))))
