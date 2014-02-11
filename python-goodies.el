@@ -361,7 +361,7 @@ run"
         (make-local-variable 'python-shell-completion-setup-code)
         (setq python-shell-completion-setup-code
               (concat python-shell-completion-setup-code "\n"
-                    "execfile(\"" cygwin-used-virtualenv "bin/activate_this.py\", dict(__file__=\"" cygwin-used-virtualenv "bin/activate_this.py\"" "))" ))))
+                    "execfile(\"" cygwin-used-virtualenv "/bin/activate_this.py\", dict(__file__=\"" cygwin-used-virtualenv "/bin/activate_this.py\"" "))" ))))
     
     (if ipython-use-with-virtualenv
         (setq python-shell-interpreter-args
