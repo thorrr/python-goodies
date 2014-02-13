@@ -308,6 +308,7 @@ use ipython with the current virtualenv")
 (defun detect-virtualenv (filename)
   "resets variable current-virtualenv if it can detect this
   python file has a virtualenv in its path"
+  (if filename
   (ldf-compat (file-name-directory filename)
    (lambda (cd)
      (let* ((subdir-p (lambda (dir) (if (file-directory-p dir) dir nil)))
@@ -320,7 +321,7 @@ use ipython with the current virtualenv")
             (virtualenv-dir (car subdirs-that-have-bin/python)))
        (if virtualenv-dir (progn
          (message (concat "Found " virtualenv-dir " as virtualenv for " filename))
-         virtualenv-dir) nil)))))
+         virtualenv-dir) nil)))) nil))
 
 (defun ldf-compat (current-dir fn-or-subdir)
   "Partial replacement for locate-dominating-file.
