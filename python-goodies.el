@@ -356,14 +356,6 @@ run"
                 ('t
                  python-shell-virtualenv-path))))
     (setq python-shell-virtualenv-path used-virtualenv)
-    (if (eq system-type 'windows-nt)
-      (let* ((cygpath-output (shell-command-to-string (concat  "cygpath -u " used-virtualenv)))
-             (cygwin-used-virtualenv (replace-regexp-in-string "\\\n" "" cygpath-output)))
-        (make-local-variable 'python-shell-completion-setup-code)
-        (setq python-shell-completion-setup-code
-              (concat python-shell-completion-setup-code "\n"
-                    "execfile(\"" cygwin-used-virtualenv "/bin/activate_this.py\", dict(__file__=\"" cygwin-used-virtualenv "/bin/activate_this.py\"" "))" ))))
-    
     (if ipython-use-with-virtualenv
         (setq python-shell-interpreter-args
               (concat "-u " (expand-file-name "ipython-script.py" (format "%s/%s" used-virtualenv virtualenv-bin-dir)))))))
