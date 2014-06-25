@@ -276,8 +276,8 @@ start an internal process and return that."
 (defun python-add-breakpoint ()
   (interactive)
   (newline-and-indent)
-  (insert "import ipdb; ipdb.set_trace()")
-  (highlight-lines-matching-regexp "^[ 	]*import ipdb; ipdb.set_trace()"))
+  (insert "import pdb; pdb.set_trace()")
+  (highlight-lines-matching-regexp "^[ 	]*import pdb; pdb.set_trace()"))
 (define-key python-mode-map (kbd "C-c C-b") 'python-add-breakpoint)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -294,6 +294,15 @@ start an internal process and return that."
 (defcustom ipython-use-with-virtualenv nil
   "Set up python-shell-interpreter-args-var correctly to
 use ipython with the current virtualenv")
+
+
+(defconst bin-python-dir
+  (if (eq system-type 'windows-nt) "\\Scripts\\" "/bin/")
+  "root direcotry of the python executable based on emacs architecture")
+
+(defconst bin-python
+  (concat bin-python-dir (if (eq system-type 'windows-nt)  "python.exe" "python"))
+  "path to the python executable based on emacs architecture")
 
 (defun set-current-virtualenv (dir)
   (interactive "D")
@@ -315,7 +324,7 @@ use ipython with the current virtualenv")
             (ls (mapcar (lambda (f) (concat cd f)) (directory-files cd)))
             (subdirs (delq nil (mapcar subdir-p ls)))
             (subdirs-that-have-bin/python (delq nil (mapcar (lambda (dir)
-              (if (file-regular-p (concat dir "/bin/python"))
+              (if (file-regular-p (concat dir bin-python))
                   dir nil))
                  subdirs)))
             (virtualenv-dir (car subdirs-that-have-bin/python)))
@@ -356,6 +365,11 @@ run"
                 ('t
                  python-shell-virtualenv-path))))
     (setq python-shell-virtualenv-path used-virtualenv)
+    ;; (make-local-variable 'pymacs-python-command) (setq pymacs-python-command (concat used-virtualenv bin-python))  ;;doesn't work because pymacs has already been called at this point
+    ;; this doesn't work well if you're simultaneously editing files from different virtualenvs because there's only one *Pymacs* buffer 
+    (if (file-exists-p (concat used-virtualenv bin-python-dir "/activate_this.py"))
+      (pymacs-exec (concat "af = \"" used-virtualenv bin-python-dir "/activate_this.py\"; execfile(af, dict(__file__=af))"))
+      (message "Defaulting to global python installation for pymacs/rope"))
     (if ipython-use-with-virtualenv
         (setq python-shell-interpreter-args
               (concat "-u " (expand-file-name "ipython-script.py" (format "%s/%s" used-virtualenv virtualenv-bin-dir)))))))
