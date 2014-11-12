@@ -84,11 +84,6 @@
   (if (and (boundp 'ropemacs-mode) (not ropemacs-mode)) (ropemacs-mode))
 )
 
-;; regenerate the import cache whenever you open a project.  this can
-;; be slow the first time
-(defadvice rope-open-project (after rope-open-project-then-regenerate-import-cache activate)
-  (rope-generate-autoimport-cache))
-
 ;; Autocomplete
 (require 'ac-python) ;; a source for python auto-complete that comes from the
                      ;; *Python* buffer or the unnamed "internal" process
