@@ -292,8 +292,8 @@ use ipython with the current virtualenv")
 
 
 (defconst bin-python-dir
-  (if (eq system-type 'windows-nt) "\\Scripts\\" "/bin/")
-  "root direcotry of the python executable based on emacs architecture")
+  (if (eq system-type 'windows-nt) "/Scripts/" "/bin/")
+  "root directory of the python executable based on emacs architecture")
 
 (defconst bin-python
   (concat bin-python-dir (if (eq system-type 'windows-nt)  "python.exe" "python"))
