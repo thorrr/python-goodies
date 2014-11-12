@@ -386,8 +386,8 @@ argument"
 (defun pymacs-reload-rope () 
     "Reload rope"
     (interactive)
-    (pymacs-terminate-services )
-    (pymacs-load "ropemacs" "rope-"))
-
+    (flet ((yes-or-no-p (&optional arg) 't))
+      (pymacs-terminate-services)
+      (pymacs-load "ropemacs" "rope-")))
 
 (provide 'python-goodies)
