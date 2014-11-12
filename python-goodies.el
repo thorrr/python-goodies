@@ -390,4 +390,42 @@ argument"
       (pymacs-terminate-services)
       (pymacs-load "ropemacs" "rope-")))
 
+(defun set-virtualenv-in-rope-config (rope-config-filename virtualenv-dir)
+  (let* ((activate-script-name (concat virtualenv-dir bin-python-dir "activate_this.py"))
+        (execfile-line (concat "    execfile(\"" activate-script-name
+                               "\", dict(__file__=\"" activate-script-name "\"))")))
+    (with-temp-buffer
+      (insert-file-contents rope-config-filename)
+      (goto-char (point-min))
+      (if (re-search-forward execfile-line nil 't 1)
+          'exists (progn
+          (let ((is-rope-config-file (re-search-forward "^def set_prefs(prefs):" nil 't)))
+            (if (not is-rope-config-file)
+                (error (concat "file " rope-config-filename " isn't a rope project file"))))
+          (next-line)
+          (next-line)
+          (move-beginning-of-line nil)
+          (delete-region (point) (save-excursion (end-of-line) (point)))
+          (insert execfile-line)
+          (write-file rope-config-filename)
+          'modified
+          )))))
+
+
+(defun find-rope-config-file ()
+  "grab the argument to find-file by redefining it in rope-project-config's context"
+  (let ((filename nil))
+    (flet ((find-file (arg) (setq filename arg)))
+      (rope-project-config))
+    filename))
+
+(defun rope-set-virtualenv ()
+  "add virtualenv setup to rope project"
+  (interactive)
+  (let ((set? (set-virtualenv-in-rope-config (find-rope-config-file) python-shell-virtualenv-path)))
+    (if (eq set? 'modified) (progn
+      (print (concat "virtualenv " python-shell-virtualenv-path " reset in rope project config, restarting pymacs."))
+      (pymacs-reload-rope)))
+    't))
+
 (provide 'python-goodies)
