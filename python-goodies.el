@@ -360,14 +360,17 @@ run"
                 ('t
                  python-shell-virtualenv-path))))
     (setq python-shell-virtualenv-path used-virtualenv)
-    ;; (make-local-variable 'pymacs-python-command) (setq pymacs-python-command (concat used-virtualenv bin-python))  ;;doesn't work because pymacs has already been called at this point
-    ;; this doesn't work well if you're simultaneously editing files from different virtualenvs because there's only one *Pymacs* buffer 
-    (if (file-exists-p (concat used-virtualenv bin-python-dir "/activate_this.py"))
-      (pymacs-exec (concat "af = \"" used-virtualenv bin-python-dir "/activate_this.py\"; execfile(af, dict(__file__=af))"))
-      (message "Defaulting to global python installation for pymacs/rope"))
-    (if ipython-use-with-virtualenv
-        (setq python-shell-interpreter-args
-              (concat "-u " (expand-file-name "ipython-script.py" (format "%s/%s" used-virtualenv virtualenv-bin-dir)))))))
+    ;; doesn't work because pymacs has already been called at this point
+    ;; (make-local-variable 'pymacs-python-command) (setq pymacs-python-command (concat used-virtualenv bin-python))
+    (if (file-exists-p (concat used-virtualenv bin-python-dir "activate_this.py")) (progn
+      (setq virtualenv-activate-command
+            (concat "af = \"" used-virtualenv bin-python-dir "/activate_this.py\"; execfile(af, dict(__file__=af))"))
+      (add-to-list 'python-shell-setup-codes 'virtualenv-activate-command))
+      ;;else
+        (message "Defaulting to global python installation for pymacs/rope")
+      (if ipython-use-with-virtualenv
+          (setq python-shell-interpreter-args
+              (concat "-u " (expand-file-name "ipython-script.py" (format "%s/%s" used-virtualenv virtualenv-bin-dir))))))))
 
 (defadvice python-eldoc--get-doc-at-point (around python-eldoc--get-doc-at-point-around activate)
   (let ((force-process (python-get-named-else-internal-process)))
