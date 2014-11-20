@@ -5,20 +5,19 @@
 ;; Python specific keybindings
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (add-hook 'python-mode-hook (lambda ()
-  (define-key python-mode-map (kbd "C-M-<return>") 'my-python-send-buffer)
-  (define-key python-mode-map (kbd "M-.") 'my-rope-goto-definition)
-  (define-key python-mode-map (kbd "M-,") 'my-rope-go-backward)
-  (define-key python-mode-map (kbd "M-i") 'my-python-shell-smart-switch)
-  (define-key python-mode-map (kbd "C-c C-j") 'my-python-eval-line)
-  (define-key python-mode-map (kbd "S-<f4>") 'my-restart-python)
+  (define-key python-mode-map (kbd "C-M-<return>") 'python-goodies-python-send-buffer)
+  (define-key python-mode-map (kbd "M-.") 'python-goodies-rope-goto-definition)
+  (define-key python-mode-map (kbd "M-,") 'python-goodies-rope-go-backward)
+  (define-key python-mode-map (kbd "M-i") 'python-goodies-python-shell-smart-switch)
+  (define-key python-mode-map (kbd "C-c C-j") 'python-goodies-eval-line)
+  (define-key python-mode-map (kbd "S-<f4>") 'python-goodies-restart-python-repl)
 ))
 
 (add-hook 'inferior-python-mode-hook (lambda ()
-  (define-key inferior-python-mode-map (kbd "M-i") 'my-python-shell-smart-switch)
-  (define-key inferior-python-mode-map [f9] 'my-python-show-graphs)
+  (define-key inferior-python-mode-map (kbd "M-i") 'python-goodies-python-shell-smart-switch)
   (define-key inferior-python-mode-map [down] 'comint-next-matching-input-from-input)
   (define-key inferior-python-mode-map [up] 'comint-previous-matching-input-from-input)
-  (define-key inferior-python-mode-map [f4] 'my-restart-python)
+  (define-key inferior-python-mode-map [f4] 'python-goodies-restart-python-repl)
 ))
 
 (add-hook 'ropemacs-mode-hook (lambda ()
@@ -37,6 +36,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Inferior Python shell setup variables
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defcustom python-inferior-shell-type 'python
   "Customize inferior shells to be \"python\" or \"ipython\"."
   :type 'symbol
@@ -62,10 +62,11 @@
       python-shell-interpreter (car (get 'python-shell-interpreter 'standard-value))
       python-shell-interpreter-args (car (get 'python-shell-interpreter-args 'standard-value))
       python-shell-prompt-regexp (car (get 'python-shell-prompt-regexp 'standard-value))
-      python-shell-prompt-output-regexp (car (get 'python-shell-prompt-output-regexp 'standard-value))
+      ;;sometimes prompts "build up" in the inferior processes so filter them out
+      python-shell-prompt-output-regexp "\\(>>> \\)*" ;;(car (get 'python-shell-prompt-output-regexp 'standard-value))
       python-shell-completion-setup-code (car (get 'python-shell-completion-setup-code 'standard-value))
       python-shell-completion-module-string-code (car (get 'python-shell-completion-module-string-code 'standard-value))
-      python-shell-completion-string-code (car (get 'python-shell-completion-string-code 'standard-value))
+      python-shell-completion-string-code  (car (get 'python-shell-completion-string-code 'standard-value))
       ) 't)
         ('t (error "python-shell-setup must be called with 'python or 'ipython"))))
 
@@ -76,20 +77,31 @@
 (require 'pymacs)
 (setq pymacs-auto-restart t)
 
-(defun my-turn-on-ropemacs () (interactive)
-  (setq ropemacs-enable-shortcuts 'nil) ;;otherwise this overwrites M-/ and M-?
-  (setq ropemacs-enable-autoimport 't)
-  (setq ropemacs-autoimport-modules `("os" "shutil"))
-  (if (not (boundp 'ropemacs-mode)) (pymacs-load "ropemacs" "rope-"))
-  (if (and (boundp 'ropemacs-mode) (not ropemacs-mode)) (ropemacs-mode))
-)
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Autocomplete
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (require 'ac-python) ;; a source for python auto-complete that comes from the
                      ;; *Python* buffer or the unnamed "internal" process
-(ac-ropemacs-initialize) ;; hook rope into auto-complete
+;;swallow errors because sometimes start of expression gets a region of (nil xxxxx)
+(defadvice ac-get-python-symbol-at-point (around ac-get-python-symbol-at-point-around activate)
+  (let ((out (ignore-errors ad-do-it)))
+    (if out out "")))
 
+(defun python-symbol-completions (symbol)
+  "Adapter to make ac-python work with gallina's python mode"
+  (let* ((process (python-get-named-else-internal-process))
+         (whole-line (buffer-substring-no-properties (line-beginning-position) (line-end-position)))
+         (input (replace-regexp-in-string "\\(^[[:space:]]*\\)" "" whole-line)) ;; have to eliminate leading tabs/spaces?
+         (psc (python-shell-completion-get-completions process whole-line input)))
+    (if psc psc "")))
+
+(add-hook 'python-mode-hook (lambda () 
+  ;; (add-to-list 'ac-sources 'ac-source-yasnippet)
+))
+
+;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Flymake
+;;;;;;;;;;;;;;;;;;;;;;;;
 (add-to-list 'flymake-allowed-file-name-masks '("\\.py\\'" flymake-pyflakes-init))
 (defun flymake-pyflakes-init ()
   (if (executable-find "pyflakes")
@@ -117,31 +129,28 @@
 (add-hook 'python-mode-hook (lambda ()
   (set-variable 'python-indent-offset 4)
   (set-variable 'indent-tabs-mode nil)
-  (setq ropemacs-enable-autoimport t)
-  (add-to-list 'ac-sources 'ac-source-python)
-  ;;TODO - make symbolName : packagea.packageb.packageC trigger an import statement
-  (add-to-list 'ac-sources 'ac-source-ropemacs)
-  ;; (add-to-list 'ac-sources 'ac-source-yasnippet)
-  
   (python-shell-setup python-inferior-shell-type)
+  (setq ropemacs-enable-autoimport t)   ;;TODO - make symbolName : packagea.packageb.packageC trigger an import statement
+
   ;; An Internal Process is created for each unique configuration.
   ;; Set up each file's virtualenv before calling python-just-source-file so that each virtualenv
   ;; will have a single internal process
   (virtualenv-hook)
-  (python-just-source-file
-   (buffer-file-name)
-   (python-shell-send-setup-code-to-process (python-shell-internal-get-or-create-process)))
-  ;;(setq ropemacs-guess-project (cdr project-details));;get all of the python subdirectories
-  (local-set-key [S-f10] 'my-python-run-test-in-inferior-buffer)
-  (local-set-key [f10] 'my-python-toggle-test-implementation)
-  (my-turn-on-ropemacs) ;;something repeatedly calls pymacs-load "ropemacs" so you have to switch it back on
+  ;; source the file and then send our virtualenv and shell complete code to the internal process
+  (python-just-source-file (buffer-file-name)
+                           (python-shell-send-setup-code-to-process
+                            (python-shell-internal-get-or-create-process)))
+  (if (check-for-readline (python-get-named-else-internal-process)) 't
+    (message "Warning:  readline not detected on system.  pip install pyreadline to set it up"))
+  (if (check-for-virtualenv (python-get-named-else-internal-process))
+      (message (concat "Virtualenv successfully activated in internal python process for " (buffer-file-name))))
+
+  (python-goodies-turn-on-ropemacs) ;;something repeatedly calls pymacs-load "ropemacs" so you have to switch it back on
   (autopair-mode)
   (setq autopair-handle-action-fns '(autopair-default-handle-action
                                      autopair-dont-if-point-non-whitespace
                                      autopair-python-triple-quote-action))
 ))
-
-
 
 (add-hook 'inferior-python-mode-hook (lambda ()
   ;; jump to the bottom of the comint buffer if you start typing
@@ -152,95 +161,34 @@
 ;; Functions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;;wrapper to make ac-python work with Gallina's python.el
-(defun python-symbol-completions (symbol)
-  (let* ((process (python-get-named-else-internal-process))
-         ;;this breaks the abstraction in ac-python (it's defined without referencing the cursor position
-         ;;but i don't feel like changing ac-python right now
-         (current-line (buffer-substring-no-properties (line-beginning-position) (line-end-position)))
-         ;; have to eliminate leading tabs/spaces
-         (curline (replace-regexp-in-string "\\(^[[:space:]]*\\)" "" current-line))
-         (psc (python-shell-completion--get-completions curline process python-shell-completion-string-code)))
-    psc))
+(defun python-shell-send-setup-code-to-process (process)
+  "Gallina's python-shell-send-setup-code doesn't allow a buffer
+argument"
+  ;; (flet ((get-buffer-process (lambda (name) process)))
+  (let* ((orig (symbol-function 'get-buffer-process))
+         (fn (lambda (_) process)))
+    (fset 'get-buffer-process fn)
+    (python-shell-send-setup-code)
+    (fset 'get-buffer-process orig)
+    process))
+
+(defun check-for-readline (process)
+  "return 't if we can import readline.  if we can't autocomplete will be silently broken"
+  (let ((repl-out (python-shell-send-string-no-output "import readline;''" process)))
+    (if (string-match "^\\(>>> \\)*''" repl-out) 't nil)))
+
+(defun check-for-virtualenv (process)
+  "return 't if this process is a virtualenv."
+  (let ((repl-out (python-shell-send-string-no-output "import sys;  hasattr(sys, 'real_prefix')" process)))
+    (string= repl-out "True")))
 
 ;; This equivalent function doesn't exist in Gallina's code
 (defun python-get-named-else-internal-process ()
   "return the current global process if there is one.  Otherwise,
 start an internal process and return that."
-      (if (< emacs-major-version 24)
-      (defun process-live-p (process)
-        "Returns non-nil if PROCESS is alive.
-         A process is considered alive if its status is `run',
-         `open',`listen', `connect' or `stop'. Value is nil if PROCESS is
-          not a process."
-        (and (processp process)
-             (memq (process-status process)
-                   '(run open listen connect stop)))))
-      (let* ((global-process (python-shell-get-process))
-             (internal-process-state (process-live-p (python-shell-internal-get-process-name)))
-             (internal-process (if internal-process-state (get-process (python-shell-internal-get-process-name))
-                                 nil))
-             (existing-process (if global-process global-process internal-process))
-             (process (if (not existing-process) (progn
-                          (message "Starting inferior, unnamed Python process.")
-                          (python-shell-send-setup-code-to-process (python-shell-internal-get-or-create-process)))
-                        existing-process)))
-        process))
-
-
-
-(defun my-rope-goto-definition ()(interactive) (push-current-location) (rope-goto-definition)) 
-(defun my-rope-go-backward () (interactive) (pop-current-location))
-(defun my-python-send-buffer () (interactive) (python-shell-send-buffer) (my-python-shell-smart-switch))
-(defun my-python-shell-smart-switch ()
-  (interactive)
-  (let ((saved-point (point))
-	(saved-frame (selected-frame))
-	(saved-window (selected-window)))
-    (if (string= (python-shell-get-process-name t) "Python") (end-of-buffer) ;;we are in the inferior buffer
-      (let ((display-buffer-reuse-frames t)) (python-shell-switch-to-shell) (end-of-buffer)))
-    (if (and (eq saved-point (point))
-             (eq saved-frame (selected-frame))
-             (eq saved-window (selected-window))) ;;nothing moved - we're at the end of the inferior buffer
-        (progn
-          (raise-frame my-python-most-recent-frame)
-          (select-window my-python-most-recent-window))
-      (if (not (eq saved-window (selected-window))) ;;moved to a different window
-          (progn (setq my-python-most-recent-frame saved-frame)
-                 (setq my-python-most-recent-window saved-window)
-                 )))))
-
-(defun my-restart-python () (interactive)
-  (let ((process (python-shell-get-or-create-process))
-        (in-repl (eq major-mode 'inferior-python-mode)))
-    (if in-repl (other-window 1))
-    (python-shell-send-string "quit()" process)
-    (sleep-for 0.1)
-    (python-shell-get-or-create-process)
-    (if in-repl (sleep-for 0.1) (other-window 1) (end-of-buffer))
-))
-
-;; I never want run-python to ask me for a path
- (defun run-python (&optional a b) (interactive "ii")
-   (python-shell-make-comint (python-shell-parse-command) (python-shell-get-process-name nil) t))
-
-(defun my-python-eval-line ()
-  "Evaluate the current Python line in the inferior Python process."
-  (interactive) 
-  (python-shell-send-string
-   (buffer-substring-no-properties (point) (line-end-position))
-   (python-get-named-else-internal-process)))
-
-(defun ipython-eval-region (start end)
-  "Send the region delimited by START and END to inferior ipython process."
-  (interactive "r")
-  (kill-new (buffer-substring start end))
-  (python-shell-send-string "%paste" nil t))
-
-;; (defun python-shell-send-region (start end)
-;;   "Overridden.  Use the %paste IPython method to send copied regions to the inferior Python process."
-;;   (interactive "r")
-;;   (my-python-eval-region start end))
+  (let ((process (or (python-shell-get-process)
+                     (python-shell-internal-get-or-create-process))))                
+    process))
 
 (defun python-just-source-file (filename &optional process)
   "Force process to evaluate filename but don't run __main__.
@@ -261,9 +209,8 @@ start an internal process and return that."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; IPDB
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;;from http://pedrokroger.com/2010/07/configuring-emacs-as-a-python-ide-2/
+;;from http://pedrokroger.com/2010/07/configuring-emacs-as-a-python-ide-2/
 (defun annotate-pdb ()
-  (interactive)
   (highlight-lines-matching-regexp "import ipdb")
   (highlight-lines-matching-regexp "ipdb.set_trace()"))
 (add-hook 'python-mode-hook 'annotate-pdb)
@@ -364,7 +311,7 @@ run"
     ;; (make-local-variable 'pymacs-python-command) (setq pymacs-python-command (concat used-virtualenv bin-python))
     (if (file-exists-p (concat used-virtualenv bin-python-dir "activate_this.py")) (progn
       (setq virtualenv-activate-command
-            (concat "af = \"" used-virtualenv bin-python-dir "/activate_this.py\"; execfile(af, dict(__file__=af))"))
+            (concat "af = \"" used-virtualenv bin-python-dir "activate_this.py\"; execfile(af, dict(__file__=af))\n"))
       (add-to-list 'python-shell-setup-codes 'virtualenv-activate-command))
       ;;else
         (message "Defaulting to global python installation for pymacs/rope")
@@ -375,23 +322,6 @@ run"
 (defadvice python-eldoc--get-doc-at-point (around python-eldoc--get-doc-at-point-around activate)
   (let ((force-process (python-get-named-else-internal-process)))
     ad-do-it))
-
-(defun python-shell-send-setup-code-to-process (process)
-  "Gallina's python-shell-send-setup-code doesn't allow a buffer
-argument"
-  (let* ((orig (symbol-function 'get-buffer-process))
-         (fn (lambda (_) process)))
-    (fset 'get-buffer-process fn)
-    (python-shell-send-setup-code)
-    (fset 'get-buffer-process orig)
-    process))
-
-(defun pymacs-reload-rope () 
-    "Reload rope"
-    (interactive)
-    (flet ((yes-or-no-p (&optional arg) 't))
-      (pymacs-terminate-services)
-      (pymacs-load "ropemacs" "rope-")))
 
 (defun set-virtualenv-in-rope-config (rope-config-filename virtualenv-dir)
   (let* ((activate-script-name (concat virtualenv-dir bin-python-dir "activate_this.py"))
@@ -413,22 +343,92 @@ argument"
           (write-file rope-config-filename)
           'modified
           )))))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Commands
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-
-(defun find-rope-config-file ()
-  "grab the argument to find-file by redefining it in rope-project-config's context"
-  (let ((filename nil))
-    (flet ((find-file (arg) (setq filename arg)))
-      (rope-project-config))
-    filename))
+(defun pymacs-reload-rope () 
+    "Reload rope"
+    (interactive)
+    (flet ((yes-or-no-p (&optional arg) 't))
+      (pymacs-terminate-services)
+      (pymacs-load "ropemacs" "rope-")))
 
 (defun rope-set-virtualenv ()
   "add virtualenv setup to rope project"
   (interactive)
+  (defun find-rope-config-file ()
+    "grab the argument to find-file by redefining it in rope-project-config's context"
+    (let ((filename nil))
+      (flet ((find-file (arg) (setq filename arg)))
+        (rope-project-config))
+      filename))
   (let ((set? (set-virtualenv-in-rope-config (find-rope-config-file) python-shell-virtualenv-path)))
     (if (eq set? 'modified) (progn
       (print (concat "virtualenv " python-shell-virtualenv-path " reset in rope project config, restarting pymacs."))
       (pymacs-reload-rope)))
     't))
+
+(defun python-goodies-turn-on-ropemacs ()
+  (interactive)
+  (setq ropemacs-enable-shortcuts 'nil) ;;otherwise this overwrites M-/ and M-?
+  (setq ropemacs-enable-autoimport 't)
+  (setq ropemacs-autoimport-modules `("os" "shutil"))
+  (if (not (boundp 'ropemacs-mode)) (pymacs-load "ropemacs" "rope-"))
+  (if (and (boundp 'ropemacs-mode) (not ropemacs-mode)) (ropemacs-mode))
+  ;; hook rope into auto-complete - this slows down everything so it's disabled for now
+  ;; (ac-ropemacs-initialize)
+  ;; (add-to-list 'ac-sources 'ac-source-ropemacs)
+)
+
+(defun python-goodies-rope-goto-definition ()(interactive) (push-current-location) (rope-goto-definition)) 
+(defun python-goodies-rope-go-backward () (interactive) (pop-current-location))
+(defun python-goodies-python-send-buffer () (interactive) (python-shell-send-buffer) (python-goodies-python-shell-smart-switch))
+(defun python-goodies-python-shell-smart-switch ()
+  (interactive)
+  (let ((saved-point (point))
+	(saved-frame (selected-frame))
+	(saved-window (selected-window)))
+    (if (string= (python-shell-get-process-name t) "Python") (end-of-buffer) ;;we are in the inferior buffer
+      (let ((display-buffer-reuse-frames t)) (python-shell-switch-to-shell) (end-of-buffer)))
+    (if (and (eq saved-point (point))
+             (eq saved-frame (selected-frame))
+             (eq saved-window (selected-window))) ;;nothing moved - we're at the end of the inferior buffer
+        (progn
+          (raise-frame my-python-most-recent-frame)
+          (select-window my-python-most-recent-window))
+      (if (not (eq saved-window (selected-window))) ;;moved to a different window
+          (progn (setq my-python-most-recent-frame saved-frame)
+                 (setq my-python-most-recent-window saved-window)
+                 )))))
+
+(defun python-goodies-restart-python-repl () (interactive)
+  (let ((process (python-shell-get-or-create-process))
+        (in-repl (eq major-mode 'inferior-python-mode)))
+    (if in-repl (other-window 1))
+    (python-shell-send-string "quit()" process)
+    (sleep-for 0.1)
+    (python-shell-get-or-create-process)
+    (if in-repl (sleep-for 0.1) (other-window 1) (end-of-buffer))
+))
+
+;; I never want run-python to ask me for a path
+ (defun run-python (&optional a b) (interactive "ii")
+   (python-shell-make-comint (python-shell-parse-command) (python-shell-get-process-name nil) t))
+
+(defun python-goodies-eval-line ()
+  "Evaluate the current Python line in the inferior Python process."
+  (interactive) 
+  (python-shell-send-string
+   (buffer-substring-no-properties (point) (line-end-position))
+   (python-get-named-else-internal-process)))
+
+(defun ipython-eval-region (start end)
+  "Send the region delimited by START and END to inferior ipython process."
+  (interactive "r")
+  (kill-new (buffer-substring start end))
+  (python-shell-send-string "%paste" nil t))
+
+
 
 (provide 'python-goodies)
