@@ -383,7 +383,12 @@ run"
 
 (defun python-goodies-rope-goto-definition ()(interactive) (push-current-location) (rope-goto-definition)) 
 (defun python-goodies-rope-go-backward () (interactive) (pop-current-location))
-(defun python-goodies-python-send-buffer () (interactive) (python-shell-send-buffer) (python-goodies-python-shell-smart-switch))
+(defun python-goodies-python-send-buffer ()
+  (interactive)
+  ;;refresh the internal process
+  (python-just-source-file (buffer-file-name) (python-shell-internal-get-or-create-process))
+  (python-shell-send-buffer) (python-goodies-python-shell-smart-switch))
+
 (defun python-goodies-python-shell-smart-switch ()
   (interactive)
   (let ((saved-point (point))
