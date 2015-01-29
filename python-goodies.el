@@ -146,10 +146,6 @@
       (message (concat "Virtualenv successfully activated in internal python process for " (buffer-file-name))))
 
   (python-goodies-turn-on-ropemacs) ;;something repeatedly calls pymacs-load "ropemacs" so you have to switch it back on
-  (autopair-mode)
-  (setq autopair-handle-action-fns '(autopair-default-handle-action
-                                     autopair-dont-if-point-non-whitespace
-                                     autopair-python-triple-quote-action))
 ))
 
 (add-hook 'inferior-python-mode-hook (lambda ()
