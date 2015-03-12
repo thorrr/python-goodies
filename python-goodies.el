@@ -188,19 +188,18 @@ start an internal process and return that."
 
 (defun python-just-source-file (filename &optional process)
   "Force process to evaluate filename but don't run __main__.
-   Gallina has a similar technique for evaluating buffers in
-   python-shell-send-buffer.  But his doesn't allow us to specify
-   an internal Python process"
-  (let ((command-string-1 "___oldName = __name__")
-        (command-string-2 "__name__ = None")
-        (command-string-3
-         (concat "execfile( \"" filename "\", globals())"))
-        (command-string-4 "__name__ = ___oldName"))
-    (python-shell-send-string command-string-1 process)
-    (python-shell-send-string command-string-2 process)
-    (python-shell-send-string command-string-3 process)
-    (python-shell-send-string command-string-4 process)
-    ))
+   Wraps Gallina's python-shell-send-buffer to let us specify both filename and process"
+
+  (defadvice python-shell-send-string (around psss-adapter activate)
+    "always pass in a second argument 'process' that's defined in the
+     caller's environment"
+    (ad-set-arg 1 process)
+    ad-do-it)
+
+  (with-temp-buffer
+    (if (ignore-errors (insert-file-contents filename))
+        (python-shell-send-buffer)))
+  (ad-unadvise 'python-shell-send-string))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; IPDB
