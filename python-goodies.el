@@ -164,7 +164,7 @@ argument"
   (let* ((orig (symbol-function 'get-buffer-process))
          (fn (lambda (_) process)))
     (fset 'get-buffer-process fn)
-    (python-shell-send-setup-code)
+    (ignore-errors (python-shell-send-setup-code))
     (fset 'get-buffer-process orig)
     process))
 
