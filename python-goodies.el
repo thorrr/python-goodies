@@ -251,6 +251,7 @@ use ipython with the current virtualenv")
 (defun reset-current-virtualenv ()
   (interactive)
   (setq current-virtualenv (default-value 'current-virtualenv))
+  ;;TODO run virtualenv-hook here
   't)
 
 (defun detect-virtualenv (filename)
