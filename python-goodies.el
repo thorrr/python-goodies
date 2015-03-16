@@ -254,8 +254,8 @@ use ipython with the current virtualenv")
   't)
 
 (defun detect-virtualenv (filename)
-  "resets variable current-virtualenv if it can detect this
-  python file has a virtualenv in its path"
+  "return directory containing virtualenv python[.exe] if it can
+  detect this python file has a virtualenv in its path"
   (if filename
   (ldf-compat (file-name-directory filename)
    (lambda (cd)
