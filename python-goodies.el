@@ -196,8 +196,11 @@ start an internal process and return that."
     ad-do-it)
 
   (with-temp-buffer
-    (if (ignore-errors (insert-file-contents filename))
-        (python-shell-send-buffer)))
+    (if (ignore-errors (insert-file-contents filename)) (progn
+      (python-shell-send-string
+       (concat "import sys; sys.path.append('" (detect-package-directory filename)  "')")
+       process)
+      (python-shell-send-buffer))))
   (ad-unadvise 'python-shell-send-string))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -267,6 +270,13 @@ use ipython with the current virtualenv")
        (if virtualenv-dir (progn
          (message (concat "Found " virtualenv-dir " as virtualenv for " filename))
          virtualenv-dir) nil)))) nil))
+
+(defun detect-package-directory (filename)
+  "return first parent directory that does not contain __init__.py"
+  (ldf-compat (file-name-directory filename)
+     (lambda (cd)
+       (if (file-exists-p (concat cd "__init__.py"))
+           nil cd))))
 
 (defun ldf-compat (current-dir fn-or-subdir)
   "Partial replacement for locate-dominating-file.
@@ -380,8 +390,12 @@ run"
 (defun python-goodies-python-send-buffer ()
   (interactive)
   ;;refresh the internal process
+  (python-shell-send-string
+   (concat "import sys; sys.path.append('" (detect-package-directory (buffer-file-name))  "')")
+   (python-shell-get-or-create-process))
   (python-just-source-file (buffer-file-name) (python-shell-internal-get-or-create-process))
-  (python-shell-send-buffer) (python-goodies-python-shell-smart-switch))
+  (python-shell-send-buffer)
+  (python-goodies-python-shell-smart-switch))
 
 (defun python-goodies-python-shell-smart-switch ()
   (interactive)
