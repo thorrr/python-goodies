@@ -194,13 +194,15 @@ start an internal process and return that."
      caller's environment"
     (ad-set-arg 1 process)
     ad-do-it)
-
   (with-temp-buffer
     (if (ignore-errors (insert-file-contents filename)) (progn
       (python-shell-send-string
        (concat "import sys; sys.path.append('" (detect-package-directory filename)  "')")
        process)
-      (python-shell-send-buffer))))
+      ;;advice affects python-shell-send string inside this function
+      (python-shell-send-buffer)
+      )))
+  ;;now clean up our advice
   (ad-unadvise 'python-shell-send-string))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
