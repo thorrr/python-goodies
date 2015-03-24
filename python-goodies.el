@@ -23,6 +23,9 @@
 (add-hook 'ropemacs-mode-hook (lambda ()
   (define-key ropemacs-local-keymap (kbd "M-?") 'ac-start)
   (define-key ropemacs-local-keymap (kbd "M-/") 'hippie-expand)
+  ;;add menu item to Rope menu
+  (define-key-after (lookup-key ropemacs-local-keymap [menu-bar Rope])
+    [setup-virtualenv] '("Setup Virtualenv" . rope-set-virtualenv) 'rope-set-virtualenv)
 ))
 
 ;; can't use python-shell-extra-pythonpaths because these have to be set before we require 'pymacs
@@ -350,9 +353,6 @@ run"
           (write-file rope-config-filename)
            'modified
           )))))
-
-(define-key-after (lookup-key ropemacs-local-keymap [menu-bar Rope])
-  [setup-virtualenv] '("Setup Virtualenv" . rope-set-virtualenv) 'rope-set-virtualenv)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Commands
