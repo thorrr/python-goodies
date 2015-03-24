@@ -348,8 +348,12 @@ run"
           (delete-region (point) (save-excursion (end-of-line) (point)))
           (insert execfile-line)
           (write-file rope-config-filename)
-          'modified
+           'modified
           )))))
+
+(define-key-after (lookup-key ropemacs-local-keymap [menu-bar Rope])
+  [setup-virtualenv] '("Setup Virtualenv" . rope-set-virtualenv) 'rope-set-virtualenv)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Commands
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
