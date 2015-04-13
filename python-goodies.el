@@ -195,18 +195,19 @@ start an internal process and return that."
   (defadvice python-shell-send-string (around psss-adapter activate)
     "always pass in a second argument 'process' that's defined in the
      caller's environment"
-    (ad-set-arg 1 process)
+    (ad-set-arg 1 adv-process)
     ad-do-it)
   (with-temp-buffer
     (if (ignore-errors (insert-file-contents filename)) (progn
-      (python-shell-send-string
-       (concat "import sys; sys.path.append('" (detect-package-directory filename)  "')")
-       process)
-      ;;advice affects python-shell-send string inside this function
-      (python-shell-send-buffer)
-      )))
-  ;;now clean up our advice
-  (ad-unadvise 'python-shell-send-string))
+        (let ((adv-process process))
+          (python-shell-send-string
+           (concat "import sys; sys.path.append('" (detect-package-directory filename)  "')")
+           process)
+          ;;advice affects python-shell-send string inside this function
+          (python-shell-send-buffer))
+       ))
+    ;;now clean up our advice
+    (ad-unadvise 'python-shell-send-string)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; IPDB
