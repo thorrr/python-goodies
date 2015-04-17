@@ -195,8 +195,8 @@ start an internal process and return that."
   (defadvice python-shell-send-string (around psss-adapter activate)
     "always pass in a second argument 'process' that's defined in the
      caller's environment"
-    (ad-set-arg 1 adv-process)
-    ad-do-it)
+        (if (boundp 'adv-process) (ad-set-arg 1 adv-process))
+        ad-do-it)
   (with-temp-buffer
     (if (ignore-errors (insert-file-contents filename)) (progn
         (let ((adv-process process))
