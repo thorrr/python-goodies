@@ -62,14 +62,14 @@
         ((eq shell-type 'python)
      (message "Changing python-shell-inferior variables to support python")
      (setq
-      python-shell-interpreter (car (get 'python-shell-interpreter 'standard-value))
-      python-shell-interpreter-args (car (get 'python-shell-interpreter-args 'standard-value))
-      python-shell-prompt-regexp (car (get 'python-shell-prompt-regexp 'standard-value))
+      python-shell-interpreter (eval (car (get 'python-shell-interpreter 'standard-value)))
+      python-shell-interpreter-args (eval (car (get 'python-shell-interpreter-args 'standard-value)))
+      python-shell-prompt-regexp (eval (car (get 'python-shell-prompt-regexp 'standard-value)))
       ;;sometimes prompts "build up" in the inferior processes so filter them out
-      python-shell-prompt-output-regexp "\\(>>> \\)*" ;;(car (get 'python-shell-prompt-output-regexp 'standard-value))
-      python-shell-completion-setup-code (car (get 'python-shell-completion-setup-code 'standard-value))
-      python-shell-completion-module-string-code (car (get 'python-shell-completion-module-string-code 'standard-value))
-      python-shell-completion-string-code  (car (get 'python-shell-completion-string-code 'standard-value))
+      python-shell-prompt-output-regexp "\\(>>> \\)*" ;;(eval (car (get 'python-shell-prompt-output-regexp 'standard-value)))
+      python-shell-completion-setup-code (eval (car (get 'python-shell-completion-setup-code 'standard-value)))
+      python-shell-completion-module-string-code (eval (car (get 'python-shell-completion-module-string-code 'standard-value)))
+      python-shell-completion-string-code  (eval (car (get 'python-shell-completion-string-code 'standard-value)))
       ) 't)
         ('t (error "python-shell-setup must be called with 'python or 'ipython"))))
 
