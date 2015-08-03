@@ -28,14 +28,6 @@
     [setup-virtualenv] '("Setup Virtualenv" . rope-set-virtualenv) 'rope-set-virtualenv)
 ))
 
-;; can't use python-shell-extra-pythonpaths because these have to be set before we require 'pymacs
-(setenv "PYTHONPATH" (concat
-  (concat shared-externals "Pymacs" path-separator)
-  (concat shared-externals "ropemacs" path-separator)
-  (concat shared-externals "ropemode" path-separator)
-  (concat shared-externals "rope" path-separator)
-  (getenv "PYTHONPATH")))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Inferior Python shell setup variables
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -77,6 +69,17 @@
 ;; Global Setup
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+
+;;;;;;;;;;;;;
+;; Pymacs
+;;;;;;;;;;;;;
+;; can't use python-shell-extra-pythonpaths because these have to be set before we require 'pymacs
+(setenv "PYTHONPATH" (concat
+  (concat shared-externals "Pymacs" path-separator)
+  (concat shared-externals "ropemacs" path-separator)
+  (concat shared-externals "ropemode" path-separator)
+  (concat shared-externals "rope" path-separator)
+  (getenv "PYTHONPATH")))
 (require 'pymacs)
 (setq pymacs-auto-restart t)
 
