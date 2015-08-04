@@ -108,22 +108,38 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Flymake
 ;;;;;;;;;;;;;;;;;;;;;;;;
+(unless (fboundp 'setq-local)
+  (defmacro setq-local (var val)
+    `(set (make-local-variable ',var) ,val)))
+
 (add-to-list 'flymake-allowed-file-name-masks '("\\.py\\'" flymake-pyflakes-init))
+(add-hook 'python-mode-hook (lambda ()
+  (setq-local pyflakes-exists (if (executable-find "pyflakes") 't nil))
+  (setq-local pep8-exists (if  (executable-find "pep8") 't nil))
+  (if (not pyflakes-exists) (message "Warning:  pyflakes executable not found"))
+  (if (not pep8-exists) (message "Warning:  pep8 executable not found"))
+))
+
 (defun flymake-pyflakes-init ()
-  (if (and (executable-find "pyflakes")
-           (executable-find "pep8"))
-      (let* ((temp-file (flymake-init-create-temp-buffer-copy
-                         'flymake-create-temp-inplace))
-             (local-file (file-relative-name
-                          temp-file
-                          (file-name-directory buffer-file-name))))
-        (list "cmd" (list "/c"
-                          "pyflakes" local-file
-                          "&"
-                          "pep8" "--ignore=E124,E265" "--max-line-length=100" local-file
-                          )))
-    (progn (message "Warning:  pyflakes executable not found") nil)
-    ))
+  (let* ((temp-file (flymake-init-create-temp-buffer-copy
+                     'flymake-create-temp-inplace))
+         (local-file (file-relative-name
+                      temp-file
+                      (file-name-directory buffer-file-name)))
+         (shell (if (eq system-type 'windows-nt) "cmd" "bash"))
+         (cmd-switch (if (eq system-type 'windows-nt) "/c" "-c"))
+         (cmd-sep (if (eq system-type 'windows-nt) "&" ";"))
+         (rv (list shell `(,cmd-switch ,@(if (not (eq system-type 'windows-nt)) "{")
+                           ;;pyflakes command
+                           ,@(if pyflakes-exists `("pyflakes" ,local-file))
+                           ;;separate only if both commands exist
+                           ,@(if (and pyflakes-exists pep8-exists) `(,cmd-sep))
+                           ;;pep8 command
+                           ,@(if pep8-exists `("pep8" "--ignore=E124,E265" "--max-line-length=100" ,local-file))
+                           ;;properly wrap the combined command
+                           ,@(if (not (eq system-type 'windows-nt)) '(" ; " " }"))
+                           ))))
+    rv))
 
 (add-hook 'python-mode-hook (lambda ()
   ;;modify pyflakes' output
