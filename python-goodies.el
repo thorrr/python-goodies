@@ -144,8 +144,8 @@
 (add-hook 'python-mode-hook (lambda ()
   ;;modify pyflakes' output
   ;; use \\| to separate multiple match criteria
-  (setq flymake-warn-line-regexp "imported but unused\\|unable to detect undefined names\\|E[0-9]*")
-  (setq flymake-info-line-regexp "is assigned to but never used")))
+  (setq flymake-warn-line-regexp "imported but unused\\|unable to detect undefined names\\|E[0-9]+")
+  (setq flymake-info-line-regexp "is assigned to but never used\\|W[0-9]+")))
 
 (add-hook 'python-mode-hook 'turn-on-eldoc-mode)
 
