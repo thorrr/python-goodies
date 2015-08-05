@@ -129,17 +129,30 @@
          (shell (if (eq system-type 'windows-nt) "cmd" "bash"))
          (cmd-switch (if (eq system-type 'windows-nt) "/c" "-c"))
          (cmd-sep (if (eq system-type 'windows-nt) "&" ";"))
-         (rv (list shell `(,cmd-switch ,@(if (not (eq system-type 'windows-nt)) "{")
-                           ;;pyflakes command
-                           ,@(if pyflakes-exists `("pyflakes" ,local-file))
-                           ;;separate only if both commands exist
-                           ,@(if (and pyflakes-exists pep8-exists) `(,cmd-sep))
-                           ;;pep8 command
-                           ,@(if pep8-exists `("pep8" "--ignore=E124,E265" "--max-line-length=100" ,local-file))
-                           ;;properly wrap the combined command
-                           ,@(if (not (eq system-type 'windows-nt)) '(" ; " " }"))
-                           ))))
+         ;; build a command that runs pyflakes or pep8 or both.
+         ;; first argument is the shell to run:  bash or cmd
+         ;; second argument is a list of arguments to the shell.  For bash it _must_ have two elements:
+         ;; "-c"
+         ;; and
+         ;; a single string with the subcommand for bash to run.  Don't surround it in single quotes.
+         ;; the resulting process is equivalent to doing the following on the command line:
+         ;; bash -c ' ( pyflakes common_flymake.py ; pep8 common_flymake.py ) '
+         (rv (list shell
+                   `(,cmd-switch
+                     ;; use mapconcat to build a string with spaces in between arguments
+                     ,(mapconcat 'identity `(
+                         ,@(if (not (eq system-type 'windows-nt)) '("( "))
+                         ;; pyflakes command
+                         ,@(if pyflakes-exists `("pyflakes" ,local-file))
+                         ;; separate only if both commands exist
+                         ,@(if (and pyflakes-exists pep8-exists) `(,cmd-sep))
+                         ;; pep8 command
+                         ,@(if pep8-exists `("pep8" "--ignore=E124,E265,E701,E702" "--max-line-length=100" ,local-file))
+                         ;; properly wrap the combined command
+                         ,@(if (not (eq system-type 'windows-nt)) '(" ; )"))
+                         ) " ")))))
     rv))
+
 
 (add-hook 'python-mode-hook (lambda ()
   ;;modify pyflakes' output
