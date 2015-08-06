@@ -163,7 +163,7 @@
 (add-hook 'python-mode-hook 'turn-on-eldoc-mode)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Hooks - loading a python file
+;; Hooks - miscellaneous setup when loading a python file
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (add-hook 'python-mode-hook (lambda ()
@@ -181,7 +181,7 @@
                            (python-shell-send-setup-code-to-process
                             (python-shell-internal-get-or-create-process)))
   (if (check-for-readline (python-get-named-else-internal-process)) 't
-    (message "Warning:  readline not detected on system.  pip install pyreadline to set it up"))
+    (message "Warning:  readline not detected on system.  autocomplete from process won't work.\npip install pyreadline to set it up"))
   (if (check-for-virtualenv (python-get-named-else-internal-process))
       (message (concat "Virtualenv successfully activated in internal python process for " (buffer-file-name))))
 
@@ -194,11 +194,11 @@
   (setq comint-scroll-to-bottom-on-input t)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Functions
+;; Misc functions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun python-shell-send-setup-code-to-process (process)
-  "Gallina's python-shell-send-setup-code doesn't allow a buffer
+  "Gallina's python-shell-send-setup-code doesn't allow a process
 argument"
   ;; (flet ((get-buffer-process (lambda (name) process)))
   (let* ((orig (symbol-function 'get-buffer-process))
@@ -246,6 +246,11 @@ start an internal process and return that."
     ;;now clean up our advice
     (ad-unadvise 'python-shell-send-string)))
 
+;; turn on eldoc, properly using the internal process
+(defadvice python-eldoc--get-doc-at-point (around python-eldoc--get-doc-at-point-around activate)
+  (let ((force-process (python-get-named-else-internal-process)))
+    ad-do-it))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; IPDB
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -276,7 +281,6 @@ start an internal process and return that."
 (defcustom ipython-use-with-virtualenv nil
   "Set up python-shell-interpreter-args-var correctly to
 use ipython with the current virtualenv")
-
 
 (defconst bin-python-dir
   (if (eq system-type 'windows-nt) "/Scripts/" "/bin/")
@@ -355,21 +359,20 @@ run"
                 ('t
                  python-shell-virtualenv-path))))
     (setq python-shell-virtualenv-path used-virtualenv)
-    ;; doesn't work because pymacs has already been called at this point
+    
+    ;; the following doesn't work because pymacs has already been called at this point
     ;; (make-local-variable 'pymacs-python-command) (setq pymacs-python-command (concat used-virtualenv bin-python))
+    
     (if (file-exists-p (concat used-virtualenv bin-python-dir "activate_this.py")) (progn
       (setq virtualenv-activate-command
             (concat "af = \"" used-virtualenv bin-python-dir "activate_this.py\"; execfile(af, dict(__file__=af))\n"))
       (add-to-list 'python-shell-setup-codes 'virtualenv-activate-command))
       ;;else
+      (progn
         (message "Defaulting to global python installation for pymacs/rope")
-      (if ipython-use-with-virtualenv
-          (setq python-shell-interpreter-args
-              (concat "-u " (expand-file-name "ipython-script.py" (format "%s/%s" used-virtualenv virtualenv-bin-dir))))))))
-
-(defadvice python-eldoc--get-doc-at-point (around python-eldoc--get-doc-at-point-around activate)
-  (let ((force-process (python-get-named-else-internal-process)))
-    ad-do-it))
+        (if ipython-use-with-virtualenv
+            (setq python-shell-interpreter-args
+                  (concat "-u " (expand-file-name "ipython-script.py" (format "%s/%s" used-virtualenv virtualenv-bin-dir)))))))))
 
 (defun set-virtualenv-in-rope-config (rope-config-filename virtualenv-dir)
   (let* ((activate-script-name (concat virtualenv-dir bin-python-dir "activate_this.py"))
@@ -471,8 +474,8 @@ run"
 ))
 
 ;; I never want run-python to ask me for a path
- (defun run-python (&optional a b) (interactive "ii")
-   (python-shell-make-comint (python-shell-parse-command) (python-shell-get-process-name nil) t))
+(defun run-python (&optional a b) (interactive "ii")
+  (python-shell-make-comint (python-shell-parse-command) (python-shell-get-process-name nil) t))
 
 (defun python-goodies-eval-line ()
   "Evaluate the current Python line in the inferior Python process."
