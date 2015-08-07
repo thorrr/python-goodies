@@ -236,9 +236,10 @@ start an internal process and return that."
         ad-do-it)
   (with-temp-buffer
     (if (ignore-errors (insert-file-contents filename)) (progn
-        (let ((adv-process process))
+        (let ((adv-process process)
+              (package-directory (detect-package-directory filename)))
           (python-shell-send-string
-           (concat "import sys; sys.path.append('" (detect-package-directory filename)  "')")
+           (concat "import sys; if sys.path.count('" package-directory "') == 0: " "sys.path.append('" package-directory  "')")
            process)
           ;;advice affects python-shell-send string inside this function
           (python-shell-send-buffer))
