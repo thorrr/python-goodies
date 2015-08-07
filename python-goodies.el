@@ -266,6 +266,14 @@ namedtuple(...) plus the following scope are allowed."
           (delete-region side-effect-start (point-max)))
       )))
 
+(defun python-add-package-directory-string (filename)
+  "evaluate this string in the repl to add the root project
+directory.  This allows modules deep in the project hierarchy to
+be sourced without relative import errors "
+  (let ((package-directory (detect-package-directory filename)))
+    (concat "import sys;\nif sys.path.count('" package-directory "') == 0:\n"
+                   "  sys.path.append('" package-directory  "')\n")))
+
 (defun python-just-source-file (filename process)
   "Force process to evaluate filename but don't run __main__.
    Wraps Gallina's python-shell-send-buffer to let us specify both filename and process"
@@ -276,12 +284,9 @@ namedtuple(...) plus the following scope are allowed."
         ad-do-it)
   (with-temp-buffer
     (if (ignore-errors (insert-file-contents filename)) (progn
-        (let ((adv-process process)
-              (package-directory (detect-package-directory filename)))
+        (let ((adv-process process))
           (python-shell-send-string
-           (concat "import sys;\nif sys.path.count('" package-directory "') == 0:\n"
-                   "  sys.path.append('" package-directory  "')\n")
-           process)
+           (python-add-package-directory-string filename) process)
           (python-destroy-side-effects-in-buffer)
           ;;advice affects python-shell-send string inside this function
           (python-shell-send-buffer))
@@ -480,6 +485,9 @@ run"
   (interactive)
   ;;refresh the internal process
   (python-just-source-file (buffer-file-name) (python-shell-internal-get-or-create-process))
+  ;; add the top level package to sys.path
+  (python-shell-send-string (python-add-package-directory-string (buffer-file-name)))
+  ;; now source the entire file verbatim into the visible repl
   (python-shell-send-buffer)
   (python-goodies-python-shell-smart-switch))
 
