@@ -459,9 +459,6 @@ run"
 (defun python-goodies-python-send-buffer ()
   (interactive)
   ;;refresh the internal process
-  (python-shell-send-string
-   (concat "import sys; sys.path.append('" (detect-package-directory (buffer-file-name))  "')")
-   (python-shell-get-or-create-process))
   (python-just-source-file (buffer-file-name) (python-shell-internal-get-or-create-process))
   (python-shell-send-buffer)
   (python-goodies-python-shell-smart-switch))
