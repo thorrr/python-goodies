@@ -251,6 +251,30 @@ start an internal process and return that."
   (let ((force-process (python-get-named-else-internal-process)))
     ad-do-it))
 
+(defun python-no-side-effects-file ()
+  (interactive)
+  (let ((keywords
+         '("def" "class" "from" "import" "@"
+           ;; allow classes to be defined using namedtuple:
+           ;; Point = namedtuple('Point', ['x', 'y'])
+           "\\([[:alpha:]]\\|_\\)\\([[:alnum:]]\\|_\\)* *= *\\(collections\\.\\)?namedtuple *(")))
+    (let ((more-lines 't)
+          (side-effect-start nil))
+      (goto-char (point-min))
+      (while more-lines
+        (beginning-of-line)
+        (if (and (looking-at "[[:alpha:]]")
+                 (not (member 't (mapcar (lambda (keyword) (looking-at keyword)) keywords))))
+            ;; set side-effect-start unless we're in the middle of a side effect block
+            (if (not side-effect-start)
+                (setq side-effect-start (point)))
+          ;; else if we are looking at a keyword or blank, delete
+          ;; everything between here and the start of the side effect
+          (if side-effect-start (progn
+            (delete-region side-effect-start (point))
+            (setq side-effect-start nil))))
+        (setq more-lines (= 0 (forward-line 1)))))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; PDB
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
