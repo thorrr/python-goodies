@@ -335,16 +335,10 @@ use ipython with the current virtualenv")
   (concat bin-python-dir (if (eq system-type 'windows-nt)  "python.exe" "python"))
   "path to the python executable based on emacs architecture")
 
-(defun set-current-virtualenv (dir)
+(defun set-virtualenv (dir)
   (interactive "D")
   (setq current-virtualenv (expand-file-name dir))
-  ;;TODO run virtualenv-hook here
-  't)
-
-(defun reset-current-virtualenv ()
-  (interactive)
-  (setq current-virtualenv (default-value 'current-virtualenv))
-  ;;TODO run virtualenv-hook here
+  (virtualenv-hook)
   't)
 
 (defun detect-virtualenv (filename)
@@ -404,6 +398,7 @@ run"
                 (current-virtualenv current-virtualenv)
                 ('t
                  python-shell-virtualenv-path))))
+    (message (concat "Setting python-shell-virtualenv-path to " used-virtualenv))
     (setq python-shell-virtualenv-path used-virtualenv)
     
     ;; the following doesn't work because pymacs has already been called at this point
@@ -455,12 +450,15 @@ run"
 (defun rope-set-virtualenv ()
   "add virtualenv setup to rope project"
   (interactive)
+  (virtualenv-hook)
   (defun find-rope-config-file ()
     "grab the argument to find-file by redefining it in rope-project-config's context"
     (let ((filename nil))
       (flet ((find-file (arg) (setq filename arg)))
         (rope-project-config))
-      filename))
+      (if (eq system-type 'cygwin)
+          (concat "/cygdrive/" (substring filename 0 1) (substring filename 2))
+        filename)))
   (let ((set? (set-virtualenv-in-rope-config (find-rope-config-file) python-shell-virtualenv-path)))
     (if (eq set? 'modified) (progn
       (print (concat "virtualenv " python-shell-virtualenv-path " reset in rope project config, restarting pymacs."))
