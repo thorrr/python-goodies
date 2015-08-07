@@ -293,6 +293,7 @@ use ipython with the current virtualenv")
 (defun set-current-virtualenv (dir)
   (interactive "D")
   (setq current-virtualenv (expand-file-name dir))
+  ;;TODO run virtualenv-hook here
   't)
 
 (defun reset-current-virtualenv ()
