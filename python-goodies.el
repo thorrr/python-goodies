@@ -254,7 +254,10 @@ start an internal process and return that."
 (defun python-no-side-effects-file ()
   (interactive)
   (let ((keywords
-         '("def" "class" "from" "import" "@"
+         ;; must have spaces after keyword so
+         ;; defaultString = "foo"
+         ;; isn't picked up
+         '("def " "class " "from " "import " "@"
            ;; allow classes to be defined using namedtuple:
            ;; Point = namedtuple('Point', ['x', 'y'])
            "\\([[:alpha:]]\\|_\\)\\([[:alnum:]]\\|_\\)* *= *\\(collections\\.\\)?namedtuple *(")))
@@ -263,17 +266,24 @@ start an internal process and return that."
       (goto-char (point-min))
       (while more-lines
         (beginning-of-line)
-        (if (and (looking-at "[[:alpha:]]")
-                 (not (member 't (mapcar (lambda (keyword) (looking-at keyword)) keywords))))
-            ;; set side-effect-start unless we're in the middle of a side effect block
-            (if (not side-effect-start)
-                (setq side-effect-start (point)))
-          ;; else if we are looking at a keyword or blank, delete
-          ;; everything between here and the start of the side effect
-          (if side-effect-start (progn
-            (delete-region side-effect-start (point))
-            (setq side-effect-start nil))))
-        (setq more-lines (= 0 (forward-line 1)))))))
+        (let ((is-keyword (member 't (mapcar (lambda (keyword) (looking-at keyword)) keywords))))
+          (if (and (looking-at "[[:alpha:]]")
+                   (not is-keyword))
+              ;; set side-effect-start unless we're in the middle of a side effect block
+              (if (not side-effect-start)
+                  (setq side-effect-start (point)))
+            ;; else if we are finally looking at a keyword, delete
+            ;; everything between here and the start of the side
+            ;; effect
+            (if (and is-keyword side-effect-start) (progn
+              (delete-region side-effect-start (point))
+              (setq side-effect-start nil)))))
+        (setq more-lines (= 0 (forward-line 1))))
+      ;;finally, delete the last region if we saw something before EOF
+      (if side-effect-start
+          (delete-region side-effect-start (point-max)))
+      )))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; PDB
