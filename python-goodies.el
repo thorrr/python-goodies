@@ -101,7 +101,12 @@
          (psc (python-shell-completion-get-completions process whole-line input)))
     (if psc psc "")))
 
-(add-hook 'python-mode-hook (lambda () 
+(add-hook 'python-mode-hook (lambda ()
+  ;; by default emacs uses the dictionary and other buffers as
+  ;; completion sources which is super lame in practice.  Turn this off.
+  (setq ac-sources (delete 'ac-source-abbrev ac-sources))
+  (setq ac-sources (delete 'ac-source-dictionary ac-sources))
+  (setq ac-sources (delete 'ac-source-words-in-same-mode-buffers ac-sources))
   ;; (add-to-list 'ac-sources 'ac-source-yasnippet)
 ))
 
@@ -226,34 +231,10 @@ start an internal process and return that."
                      (python-shell-internal-get-or-create-process))))                
     process))
 
-(defun python-just-source-file (filename process)
-  "Force process to evaluate filename but don't run __main__.
-   Wraps Gallina's python-shell-send-buffer to let us specify both filename and process"
-  (defadvice python-shell-send-string (around psss-adapter activate)
-    "always pass in a second argument 'process' that's defined in the
-     caller's environment"
-        (if (boundp 'adv-process) (ad-set-arg 1 adv-process))
-        ad-do-it)
-  (with-temp-buffer
-    (if (ignore-errors (insert-file-contents filename)) (progn
-        (let ((adv-process process)
-              (package-directory (detect-package-directory filename)))
-          (python-shell-send-string
-           (concat "import sys; if sys.path.count('" package-directory "') == 0: " "sys.path.append('" package-directory  "')")
-           process)
-          ;;advice affects python-shell-send string inside this function
-          (python-shell-send-buffer))
-       ))
-    ;;now clean up our advice
-    (ad-unadvise 'python-shell-send-string)))
-
-;; turn on eldoc, properly using the internal process
-(defadvice python-eldoc--get-doc-at-point (around python-eldoc--get-doc-at-point-around activate)
-  (let ((force-process (python-get-named-else-internal-process)))
-    ad-do-it))
-
-(defun python-no-side-effects-file ()
-  (interactive)
+(defun python-destroy-side-effects-in-buffer ()
+  "In the current buffer get rid of any code that potentially can
+lead to side effects.  Only top level keywords or MyClass =
+namedtuple(...) plus the following scope are allowed."
   (let ((keywords
          ;; must have spaces after keyword so
          ;; defaultString = "foo"
@@ -284,6 +265,34 @@ start an internal process and return that."
       (if side-effect-start
           (delete-region side-effect-start (point-max)))
       )))
+
+(defun python-just-source-file (filename process)
+  "Force process to evaluate filename but don't run __main__.
+   Wraps Gallina's python-shell-send-buffer to let us specify both filename and process"
+  (defadvice python-shell-send-string (around psss-adapter activate)
+    "always pass in a second argument 'process' that's defined in the
+     caller's environment"
+        (if (boundp 'adv-process) (ad-set-arg 1 adv-process))
+        ad-do-it)
+  (with-temp-buffer
+    (if (ignore-errors (insert-file-contents filename)) (progn
+        (let ((adv-process process)
+              (package-directory (detect-package-directory filename)))
+          (python-shell-send-string
+           (concat "import sys;\nif sys.path.count('" package-directory "') == 0:\n"
+                   "  sys.path.append('" package-directory  "')\n")
+           process)
+          (python-destroy-side-effects-in-buffer)
+          ;;advice affects python-shell-send string inside this function
+          (python-shell-send-buffer))
+       ))
+    ;;now clean up our advice
+    (ad-unadvise 'python-shell-send-string)))
+
+;; turn on eldoc, properly using the internal process
+(defadvice python-eldoc--get-doc-at-point (around python-eldoc--get-doc-at-point-around activate)
+  (let ((force-process (python-get-named-else-internal-process)))
+    ad-do-it))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
