@@ -2,6 +2,15 @@
 (add-to-list 'auto-mode-alist '("\\.py\\'" . python-mode))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Customizable variables
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defcustom python-column-width 80
+  "Set fill-column to this value in python files.  Also, if using
+  pep8, warn when columns exceed this value"
+  :type 'integer
+  )
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Python specific keybindings
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (add-hook 'python-mode-hook (lambda ()
@@ -68,6 +77,18 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Global Setup
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;
+;; Column width
+;;;;;;;;;;;;;;;;;;;;
+(unless (fboundp 'setq-local)
+  (defmacro setq-local (var val)
+    `(set (make-local-variable ',var) ,val)))
+
+;; don't override the global fill column width
+(add-hook 'python-mode-hook (lambda ()
+  (setq-local fill-column python-column-width)
+))
 
 
 ;;;;;;;;;;;;;
@@ -152,7 +173,8 @@
                          ;; separate only if both commands exist
                          ,@(if (and pyflakes-exists pep8-exists) `(,cmd-sep))
                          ;; pep8 command
-                         ,@(if pep8-exists `("pep8" "--ignore=E124,E265,E701,E702" "--max-line-length=100" ,local-file))
+                         ,@(if pep8-exists `("pep8" "--ignore=E124,E265,E701,E702"
+                                             ,(concat "--max-line-length=" (format "%d" python-column-width)) ,local-file))
                          ;; properly wrap the combined command
                          ,@(if (not (eq system-type 'windows-nt)) '(" ; )"))
                          ) " ")))))
