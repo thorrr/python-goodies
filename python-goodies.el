@@ -346,10 +346,6 @@ be sourced without relative import errors "
 (defcustom auto-detect-virtualenv nil
   "When loading a python file attempt to find its virtualenv using function detect-virtualenv.")
 
-(defcustom ipython-use-with-virtualenv nil
-  "Set up python-shell-interpreter-args-var correctly to
-use ipython with the current virtualenv")
-
 (defconst bin-python-dir
   (if (eq system-type 'windows-nt) "/Scripts/" "/bin/")
   "root directory of the python executable based on emacs architecture")
@@ -422,16 +418,28 @@ run"
 
     ;; the following doesn't work because pymacs has already been called at this point
     ;; (make-local-variable 'pymacs-python-command) (setq pymacs-python-command (concat used-virtualenv bin-python))
+
     (if (file-exists-p (concat used-virtualenv bin-python-dir "activate_this.py")) (progn
+      ;; we've detected a virtualenv.  specialize setup codes to
+      ;; activate it in all shells.  Make the codes buffer-local
+      (make-local-variable 'virtualenv-activate-command)
+      (make-local-variable 'python-shell-setup-codes)  ;;global value is copied into this variable
       (setq virtualenv-activate-command
-            (concat "af = \"" used-virtualenv bin-python-dir "activate_this.py\"; execfile(af, dict(__file__=af))\n"))
-      (add-to-list 'python-shell-setup-codes 'virtualenv-activate-command))
-      ;;else
-      (progn
-        (message "Defaulting to global python installation for pymacs/rope")
-        (if ipython-use-with-virtualenv
-            (setq python-shell-interpreter-args
-                  (concat "-u " (expand-file-name "ipython-script.py" (format "%s/%s" used-virtualenv virtualenv-bin-dir)))))))))
+            (concat "af = \"" used-virtualenv bin-python-dir
+                    "activate_this.py\"; execfile(af, dict(__file__=af))\n"))
+      (add-to-list 'python-shell-setup-codes 'virtualenv-activate-command)))
+
+    ;; finally, if we're using ipython, ensure we initialize that too
+    (if (eq python-inferior-shell-type 'ipython)
+        (let ((ipython-script
+               (expand-file-name "ipython-script.py"
+                                 (format "%s/%s" used-virtualenv bin-python-dir))))
+          (if (not (file-exists-p ipython-script))
+              (message (concat "Warning:  inferior-shell-type is 'ipython but we can't find"
+                               "ipython-script.py in the virtualenv.\nOn Windows make sure "
+                               "you've installed it with pip install ipython --no-use-wheel."))
+            ;; else call the interpreter with the ipython inside the virtualenv
+            (setq python-shell-interpreter-args (concat "-u " ipython-script)))))))
 
 (defun set-virtualenv-in-rope-config (rope-config-filename virtualenv-dir)
   (let* ((activate-script-name (concat virtualenv-dir bin-python-dir "activate_this.py"))
