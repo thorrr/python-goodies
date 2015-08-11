@@ -486,9 +486,14 @@ run"
 
 (defun python-goodies-turn-on-ropemacs ()
   (interactive)
-  (setq ropemacs-enable-shortcuts 'nil) ;;otherwise this overwrites M-/ and M-?
-  (setq ropemacs-enable-autoimport 't)
+  (setq ropemacs-enable-shortcuts nil) ;;otherwise this overwrites M-/ and M-?
+
+  ;; rope-auto-import works but M-x rope-generate-autoimport-cache is
+  ;; extremely heavy (gigabytes of RAM for quite small projects).
+  ;; Turn this off for now
+  (setq ropemacs-enable-autoimport nil)
   (setq ropemacs-autoimport-modules `("os" "shutil"))
+
   (if (not (boundp 'ropemacs-mode)) (pymacs-load "ropemacs" "rope-"))
   (if (and (boundp 'ropemacs-mode) (not ropemacs-mode)) (ropemacs-mode))
   ;; hook rope into auto-complete - this slows down everything so it's disabled for now
