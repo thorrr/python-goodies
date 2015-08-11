@@ -118,8 +118,7 @@
   "Adapter to make ac-python work with gallina's python mode"
   (let* ((process (python-get-named-else-internal-process))
          (whole-line (buffer-substring-no-properties (line-beginning-position) (line-end-position)))
-         (input (replace-regexp-in-string "\\(^[[:space:]]*\\)" "" whole-line)) ;; have to eliminate leading tabs/spaces?
-         (psc (python-shell-completion-get-completions process whole-line input)))
+         (psc (python-shell-completion-get-completions process whole-line symbol)))
     (if psc psc "")))
 
 (add-hook 'python-mode-hook (lambda ()
