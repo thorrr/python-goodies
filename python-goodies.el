@@ -274,7 +274,6 @@ namedtuple(...) plus the following scope are allowed."
           (side-effect-start nil))
       (goto-char (point-min))
       (while more-lines
-        (beginning-of-line)
         (let ((is-keyword (member 't (mapcar (lambda (keyword) (looking-at keyword)) keywords))))
           (if (and (looking-at "[[:alpha:]]")
                    (not is-keyword))
