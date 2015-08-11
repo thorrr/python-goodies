@@ -147,6 +147,7 @@
 ))
 
 (defun flymake-pyflakes-init ()
+  (if (or pyflakes-exists pep8-exists)
   (let* ((temp-file (flymake-init-create-temp-buffer-copy
                      'flymake-create-temp-inplace))
          (local-file (file-relative-name
@@ -164,21 +165,22 @@
          ;; the resulting process is equivalent to doing the following on the command line:
          ;; bash -c ' ( pyflakes common_flymake.py ; pep8 common_flymake.py ) '
          (rv (list shell
-                   `(,cmd-switch
-                     ;; use mapconcat to build a string with spaces in between arguments
-                     ,(mapconcat 'identity `(
-                         ,@(if (not (eq system-type 'windows-nt)) '("( "))
-                         ;; pyflakes command
-                         ,@(if pyflakes-exists `("pyflakes" ,local-file))
-                         ;; separate only if both commands exist
-                         ,@(if (and pyflakes-exists pep8-exists) `(,cmd-sep))
-                         ;; pep8 command
-                         ,@(if pep8-exists `("pep8" "--ignore=E124,E265,E701,E702"
-                                             ,(concat "--max-line-length=" (format "%d" python-column-width)) ,local-file))
-                         ;; properly wrap the combined command
-                         ,@(if (not (eq system-type 'windows-nt)) '(" ; )"))
-                         ) " ")))))
-    rv))
+               `(,cmd-switch
+                 ;; use mapconcat to build a string with spaces in between arguments
+                 ,(mapconcat 'identity `(
+                   ,@(if (not (eq system-type 'windows-nt)) '("( "))
+                   ;; pyflakes command
+                   ,@(if pyflakes-exists `("pyflakes" ,local-file))
+                   ;; separate only if both commands exist
+                   ,@(if (and pyflakes-exists pep8-exists) `(,cmd-sep))
+                   ;; pep8 command
+                   ,@(if pep8-exists `("pep8" "--ignore=E124,E265,E701,E702"
+                                       ,(concat "--max-line-length=" (format "%d" python-column-width)) ,local-file))
+                   ;; properly wrap the combined command
+                   ,@(if (not (eq system-type 'windows-nt)) '(" ; )"))
+                   ) " ")))))
+    rv)
+      (message "Warning:  flymake won't run because neither pyflakes nor pep8 were found")))
 
 
 (add-hook 'python-mode-hook (lambda ()
