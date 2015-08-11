@@ -188,8 +188,6 @@
   (setq flymake-warn-line-regexp "imported but unused\\|unable to detect undefined names\\|E[0-9]+")
   (setq flymake-info-line-regexp "is assigned to but never used\\|W[0-9]+")))
 
-(add-hook 'python-mode-hook 'turn-on-eldoc-mode)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Hooks - miscellaneous setup when loading a python file
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -223,6 +221,16 @@
   ;; jump to the bottom of the comint buffer if you start typing
   (make-local-variable 'comint-scroll-to-bottom-on-input) 
   (setq comint-scroll-to-bottom-on-input t)))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; eldoc tweaks
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(add-hook 'python-mode-hook 'turn-on-eldoc-mode)
+;; turn on eldoc properly using the internal process
+(defadvice python-eldoc--get-doc-at-point (around python-eldoc--get-doc-at-point-around activate)
+  (let ((force-process (python-get-named-else-internal-process)))
+    ad-do-it))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Misc functions
@@ -318,12 +326,6 @@ be sourced without relative import errors "
        ))
     ;;now clean up our advice
     (ad-unadvise 'python-shell-send-string)))
-
-;; turn on eldoc, properly using the internal process
-(defadvice python-eldoc--get-doc-at-point (around python-eldoc--get-doc-at-point-around activate)
-  (let ((force-process (python-get-named-else-internal-process)))
-    ad-do-it))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; PDB
