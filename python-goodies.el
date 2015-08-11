@@ -201,6 +201,10 @@
   (python-shell-setup python-inferior-shell-type)
   (setq ropemacs-enable-autoimport t)   ;;TODO - make symbolName : packagea.packageb.packageC trigger an import statement
 
+  ;; before running virtualenv hook fill python-shell-virtualenv-path
+  ;; with the default system value
+  (setq python-shell-virtualenv-path (executable-find bin-python))
+  
   ;; An Internal Process is created for each unique configuration.
   ;; Set up each file's virtualenv before calling python-just-source-file so that each virtualenv
   ;; will have a single internal process
@@ -343,10 +347,6 @@ be sourced without relative import errors "
 (defcustom auto-detect-virtualenv nil
   "When loading a python file attempt to find its virtualenv using function detect-virtualenv.")
 
-(defcustom current-virtualenv "/usr/bin/python"
-  "Open python files using this virtualenv"
-  :type 'file)
-
 (defcustom ipython-use-with-virtualenv nil
   "Set up python-shell-interpreter-args-var correctly to
 use ipython with the current virtualenv")
@@ -361,7 +361,7 @@ use ipython with the current virtualenv")
 
 (defun set-virtualenv (dir)
   (interactive "D")
-  (setq current-virtualenv (expand-file-name dir))
+  (setq python-shell-virtualenv-path (expand-file-name dir))
   (virtualenv-hook)
   't)
 
@@ -417,17 +417,12 @@ function that takes a single argument "
   "This should be run in python-mode-hook before any comints are
 run"
   (let* ((used-virtualenv
-          (cond (auto-detect-virtualenv
-                 (detect-virtualenv (buffer-file-name)))
-                (current-virtualenv current-virtualenv)
-                ('t
-                 python-shell-virtualenv-path))))
-    (message (concat "Setting python-shell-virtualenv-path to " used-virtualenv))
+          (if auto-detect-virtualenv (detect-virtualenv (buffer-file-name))
+            python-shell-virtualenv-path)))
     (setq python-shell-virtualenv-path used-virtualenv)
-    
+
     ;; the following doesn't work because pymacs has already been called at this point
     ;; (make-local-variable 'pymacs-python-command) (setq pymacs-python-command (concat used-virtualenv bin-python))
-    
     (if (file-exists-p (concat used-virtualenv bin-python-dir "activate_this.py")) (progn
       (setq virtualenv-activate-command
             (concat "af = \"" used-virtualenv bin-python-dir "activate_this.py\"; execfile(af, dict(__file__=af))\n"))
