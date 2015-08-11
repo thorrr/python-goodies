@@ -198,7 +198,6 @@
   (set-variable 'python-indent-offset 4)
   (set-variable 'indent-tabs-mode nil)
   (python-shell-setup python-inferior-shell-type)
-  (setq ropemacs-enable-autoimport t)   ;;TODO - make symbolName : packagea.packageb.packageC trigger an import statement
 
   ;; before running virtualenv hook fill python-shell-virtualenv-path
   ;; with the default system value
