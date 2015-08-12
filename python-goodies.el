@@ -138,48 +138,46 @@
     `(set (make-local-variable ',var) ,val)))
 
 (add-to-list 'flymake-allowed-file-name-masks '("\\.py\\'" flymake-pyflakes-init))
-(add-hook 'python-mode-hook (lambda ()
-  (setq-local pyflakes-exists (if (executable-find "pyflakes") 't nil))
-  (setq-local pep8-exists (if  (executable-find "pep8") 't nil))
-  (if (not pyflakes-exists) (message "Warning:  pyflakes executable not found"))
-  (if (not pep8-exists) (message "Warning:  pep8 executable not found"))
-))
 
 (defun flymake-pyflakes-init ()
-  (if (or pyflakes-exists pep8-exists)
-  (let* ((temp-file (flymake-init-create-temp-buffer-copy
-                     'flymake-create-temp-inplace))
-         (local-file (file-relative-name
-                      temp-file
-                      (file-name-directory buffer-file-name)))
-         (shell (if (eq system-type 'windows-nt) "cmd" "bash"))
-         (cmd-switch (if (eq system-type 'windows-nt) "/c" "-c"))
-         (cmd-sep (if (eq system-type 'windows-nt) "&" ";"))
-         ;; build a command that runs pyflakes or pep8 or both.
-         ;; first argument is the shell to run:  bash or cmd
-         ;; second argument is a list of arguments to the shell.  For bash it _must_ have two elements:
-         ;; "-c"
-         ;; and
-         ;; a single string with the subcommand for bash to run.  Don't surround it in single quotes.
-         ;; the resulting process is equivalent to doing the following on the command line:
-         ;; bash -c ' ( pyflakes common_flymake.py ; pep8 common_flymake.py ) '
-         (rv (list shell
-               `(,cmd-switch
-                 ;; use mapconcat to build a string with spaces in between arguments
-                 ,(mapconcat 'identity `(
-                   ,@(if (not (eq system-type 'windows-nt)) '("( "))
-                   ;; pyflakes command
-                   ,@(if pyflakes-exists `("pyflakes" ,local-file))
-                   ;; separate only if both commands exist
-                   ,@(if (and pyflakes-exists pep8-exists) `(,cmd-sep))
-                   ;; pep8 command
-                   ,@(if pep8-exists `("pep8" "--ignore=E124,E265,E701,E702"
-                                       ,(concat "--max-line-length=" (format "%d" python-column-width)) ,local-file))
-                   ;; properly wrap the combined command
-                   ,@(if (not (eq system-type 'windows-nt)) '(" ; )"))
-                   ) " ")))))
-    rv)
-      (message "Warning:  flymake won't run because neither pyflakes nor pep8 were found")))
+  (let ((pyflakes-exists (if (executable-find "pyflakes") 't nil))
+        (pep8-exists (if  (executable-find "pep8") 't nil)))
+    (if (not pyflakes-exists) (message "Warning:  pyflakes executable not found"))
+    (if (not pep8-exists) (message "Warning:  pep8 executable not found"))
+    (if (or pyflakes-exists pep8-exists)
+        (let* ((temp-file (flymake-init-create-temp-buffer-copy
+                           'flymake-create-temp-inplace))
+               (local-file (file-relative-name
+                            temp-file
+                            (file-name-directory buffer-file-name)))
+               (shell (if (eq system-type 'windows-nt) "cmd" "bash"))
+               (cmd-switch (if (eq system-type 'windows-nt) "/c" "-c"))
+               (cmd-sep (if (eq system-type 'windows-nt) "&" ";"))
+               ;; build a command that runs pyflakes or pep8 or both.
+               ;; first argument is the shell to run:  bash or cmd
+               ;; second argument is a list of arguments to the shell.  For bash it _must_ have two elements:
+               ;; "-c"
+               ;; and
+               ;; a single string with the subcommand for bash to run.  Don't surround it in single quotes.
+               ;; the resulting process is equivalent to doing the following on the command line:
+               ;; bash -c ' ( pyflakes common_flymake.py ; pep8 common_flymake.py ) '
+               (rv (list shell
+                         `(,cmd-switch
+                           ;; use mapconcat to build a string with spaces in between arguments
+                           ,(mapconcat 'identity `(
+                                                   ,@(if (not (eq system-type 'windows-nt)) '("( "))
+                                                   ;; pyflakes command
+                                                   ,@(if pyflakes-exists `("pyflakes" ,local-file))
+                                                   ;; separate only if both commands exist
+                                                   ,@(if (and pyflakes-exists pep8-exists) `(,cmd-sep))
+                                                   ;; pep8 command
+                                                   ,@(if pep8-exists `("pep8" "--ignore=E124,E265,E701,E702"
+                                                                       ,(concat "--max-line-length=" (format "%d" python-column-width)) ,local-file))
+                                                   ;; properly wrap the combined command
+                                                   ,@(if (not (eq system-type 'windows-nt)) '(" ; )"))
+                                                   ) " ")))))
+          rv)
+      (message "Warning:  flymake won't run because neither pyflakes nor pep8 were found"))))
 
 
 (add-hook 'python-mode-hook (lambda ()
