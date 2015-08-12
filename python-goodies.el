@@ -10,13 +10,19 @@
   pep8, warn when columns exceed this value"
   :type 'integer
   )
+
+(defcustom pymacs-parent-dir 'nil
+  "Set this if you have pymacs/ropemacs installed"
+  :type 'directory
+  )
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Python specific keybindings
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (add-hook 'python-mode-hook (lambda ()
   (define-key python-mode-map (kbd "C-M-<return>") 'python-goodies-python-send-buffer)
-  (define-key python-mode-map (kbd "M-.") 'python-goodies-rope-goto-definition)
-  (define-key python-mode-map (kbd "M-,") 'python-goodies-rope-go-backward)
+  (if pymacs-parent-dir (progn
+    (define-key python-mode-map (kbd "M-.") 'python-goodies-rope-goto-definition)
+    (define-key python-mode-map (kbd "M-,") 'python-goodies-rope-go-backward)))
   (define-key python-mode-map (kbd "M-i") 'python-goodies-python-shell-smart-switch)
   (define-key python-mode-map (kbd "C-c C-j") 'python-goodies-eval-line)
   (define-key python-mode-map (kbd "S-<f4>") 'python-goodies-restart-python-repl)
@@ -95,14 +101,20 @@
 ;; Pymacs
 ;;;;;;;;;;;;;
 ;; can't use python-shell-extra-pythonpaths because these have to be set before we require 'pymacs
-(setenv "PYTHONPATH" (concat
-  (concat shared-externals "Pymacs" path-separator)
-  (concat shared-externals "ropemacs" path-separator)
-  (concat shared-externals "ropemode" path-separator)
-  (concat shared-externals "rope" path-separator)
-  (getenv "PYTHONPATH")))
-(require 'pymacs)
-(setq pymacs-auto-restart t)
+(defun pymacs-setup ()
+  (setq _python-goodies-pymacs-initiated nil)
+  (if (and pymacs-parent-dir
+           (not _python-goodies-pymacs-initiated)) (progn
+    (setenv "PYTHONPATH" (concat
+      (concat pymacs-parent-dir "Pymacs" path-separator)
+      (concat pymacs-parent-dir "ropemacs" path-separator)
+      (concat pymacs-parent-dir "ropemode" path-separator)
+      (concat pymacs-parent-dir "rope" path-separator)
+      (getenv "PYTHONPATH")))
+    (require 'pymacs)
+    (setq pymacs-auto-restart t)
+    (setq _python-goodies-pymacs-initiated 't) ;;only have to do this once per emacs session
+    )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Autocomplete
@@ -212,7 +224,9 @@
   (if (check-for-virtualenv (python-get-named-else-internal-process))
       (message (concat "Virtualenv successfully activated in internal python process for " (buffer-file-name))))
 
-  (python-goodies-turn-on-ropemacs) ;;something repeatedly calls pymacs-load "ropemacs" so you have to switch it back on
+  (if pymacs-parent-dir (progn
+    (pymacs-setup)
+    (python-goodies-turn-on-ropemacs))) ;;something repeatedly calls pymacs-load "ropemacs" so you have to switch it back on
 ))
 
 (add-hook 'inferior-python-mode-hook (lambda ()
