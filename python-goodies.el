@@ -543,7 +543,12 @@ when opening a new file."
 	(saved-frame (selected-frame))
 	(saved-window (selected-window)))
     (if (string= (python-shell-get-process-name t) "Python") (end-of-buffer) ;;we are in the inferior buffer
-      (let ((display-buffer-reuse-frames t)) (python-shell-switch-to-shell) (end-of-buffer)))
+      (let ((display-buffer-reuse-frames t))
+        ;; the following isequivalent to (python-shell-switch-to-shell) but ACTION=nil so
+        ;; we don't split into a new buffer, which is annoying
+        (pop-to-buffer (process-buffer (python-shell-get-or-create-process)))
+        ;;and set the cursor at the first repl line
+        (end-of-buffer)))
     (if (and (eq saved-point (point))
              (eq saved-frame (selected-frame))
              (eq saved-window (selected-window))) ;;nothing moved - we're at the end of the inferior buffer
