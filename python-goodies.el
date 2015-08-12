@@ -220,6 +220,9 @@
   (make-local-variable 'comint-scroll-to-bottom-on-input) 
   (setq comint-scroll-to-bottom-on-input t)))
 
+;; turn off "Active processes exist" warning for *Python* processes
+(add-hook 'comint-exec-hook 
+      (lambda () (set-process-query-on-exit-flag (get-buffer-process (current-buffer)) nil)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; eldoc tweaks
