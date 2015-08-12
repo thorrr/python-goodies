@@ -311,6 +311,7 @@ be sourced without relative import errors "
 (defun python-just-source-file (filename process)
   "Force process to evaluate filename but don't run __main__.
    Wraps Gallina's python-shell-send-buffer to let us specify both filename and process"
+  (message (format "Sourcing %s into %s" filename process))
   (defadvice python-shell-send-string (around psss-adapter activate)
     "always pass in a second argument 'process' that's defined in the
      caller's environment"
