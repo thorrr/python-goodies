@@ -407,8 +407,8 @@ function that takes a single argument "
         (ldf-compat parent fn-or-subdir)))))
 
 (defun virtualenv-hook ()
-  "This should be run in python-mode-hook before any comints are
-run"
+  "This should be run before any comints are run.  And re-run
+when opening a new file."
   (let* ((used-virtualenv
           (if auto-detect-virtualenv (detect-virtualenv (buffer-file-name))
             python-shell-virtualenv-path)))
@@ -417,17 +417,18 @@ run"
     ;; the following doesn't work because pymacs has already been called at this point
     ;; (make-local-variable 'pymacs-python-command) (setq pymacs-python-command (concat used-virtualenv bin-python))
 
+    ;; a global variable that will be skipped by python-shell-setup-codes if nil
+    (setq virtualenv-activate-command nil)
+    (add-to-list 'python-shell-setup-codes 'virtualenv-activate-command)
+
+    ;; If we've detected a virtualenv specialize setup codes to
+    ;; activate it in all new shells.
     (if (file-exists-p (concat used-virtualenv bin-python-dir "activate_this.py")) (progn
-      ;; we've detected a virtualenv.  specialize setup codes to
-      ;; activate it in all shells.  Make the codes buffer-local
-      (make-local-variable 'virtualenv-activate-command)
-      (make-local-variable 'python-shell-setup-codes)  ;;global value is copied into this variable
       (setq virtualenv-activate-command
             (concat "af = \"" used-virtualenv bin-python-dir
-                    "activate_this.py\"; execfile(af, dict(__file__=af))\n"))
-      (add-to-list 'python-shell-setup-codes 'virtualenv-activate-command)))
+                    "activate_this.py\"; execfile(af, dict(__file__=af))\n"))))
 
-    ;; finally, if we're using ipython, ensure we initialize that too
+    ;; finally, if we're using ipython, update the current value of python-shell-interpreter-args
     (if (eq python-inferior-shell-type 'ipython)
         (let ((ipython-script
                (expand-file-name "ipython-script.py"
