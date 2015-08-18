@@ -311,7 +311,7 @@ namedtuple(...) plus the following scope are allowed."
       )))
 
 (defun python-add-package-directory-string (filename)
-  "evaluate this string in the repl to add the root project
+  "Evaluate this string in the repl to add the root project
 directory.  This allows modules deep in the project hierarchy to
 be sourced without relative import errors "
   (let ((package-directory (detect-package-directory filename)))
@@ -319,8 +319,9 @@ be sourced without relative import errors "
                    "  sys.path.append('" package-directory  "')\n")))
 
 (defun python-just-source-file (filename process)
-  "Force process to evaluate filename but don't run __main__.
-   Wraps Gallina's python-shell-send-buffer to let us specify both filename and process"
+  "Force process to evaluate filename but don't run __main__ or any other code that can have side effects.
+   Wraps Gallina's python-shell-send-buffer to let us specify
+   both filename and process"
   (message (format "Sourcing %s into %s" filename process))
   (defadvice python-shell-send-string (around psss-adapter activate)
     "always pass in a second argument 'process' that's defined in the
