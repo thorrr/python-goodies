@@ -162,11 +162,12 @@
                (cmd-switch (if (eq system-type 'windows-nt) "/c" "-c"))
                (cmd-sep (if (eq system-type 'windows-nt) "&" ";"))
                ;; Build a command that runs pyflakes or pep8 or both.  First argument is
-               ;; the shell to run: bash or cmd.  Second argument is a list of arguments to
-               ;; the shell.  For bash it _must_ have exactly two elements: "-c" and a single
-               ;; string with the subcommand for bash to run.  Don't surround it in single
+               ;; the shell to run: bash or cmd.  Second argument is a list of arguments
+               ;; to the shell.  For bash it _must_ have exactly two elements: "-c" and a
+               ;; single string with the subcommand to run.  Don't surround it in single
                ;; quotes.  The resulting process is equivalent to doing the following on
                ;; the command line:
+               ;;
                ;; bash -c ' ( pyflakes common_flymake.py ; pep8 common_flymake.py ) '
                (rv (list shell
                  `(,cmd-switch
