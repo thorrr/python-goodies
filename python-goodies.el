@@ -15,6 +15,10 @@
   "Set this if you have pymacs/ropemacs installed"
   :type 'directory
   )
+
+(defcustom python-use-pylint 'nil
+  "Use pylint with flymake"
+  :type 'boolean)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Python specific keybindings
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -150,7 +154,9 @@
 (defun flymake-pyflakes-init ()
   (let ((pyflakes-exists (if (executable-find "pyflakes") 't nil))
         (pep8-exists (if (executable-find "pep8") 't nil))
-        (pylint-exists (if (executable-find "pylint") 't nil)))
+        (pylint-exists (and
+                        python-use-pylint
+                        (if (executable-find "pylint") 't nil))))
     (if (not pyflakes-exists) (message "Warning:  pyflakes executable not found"))
     (if (not pep8-exists) (message "Warning:  pep8 executable not found"))
     (if (not pylint-exists) (message "Warning:  pylint executable not found"))
