@@ -149,10 +149,12 @@
 
 (defun flymake-pyflakes-init ()
   (let ((pyflakes-exists (if (executable-find "pyflakes") 't nil))
-        (pep8-exists (if  (executable-find "pep8") 't nil)))
+        (pep8-exists (if (executable-find "pep8") 't nil))
+        (pylint-exists (if (executable-find "pylint") 't nil)))
     (if (not pyflakes-exists) (message "Warning:  pyflakes executable not found"))
     (if (not pep8-exists) (message "Warning:  pep8 executable not found"))
-    (if (or pyflakes-exists pep8-exists)
+    (if (not pylint-exists) (message "Warning:  pylint executable not found"))
+    (if (or pyflakes-exists pep8-exists pylint-exists)
         (let* ((temp-file (flymake-init-create-temp-buffer-copy
                            'flymake-create-temp-inplace))
                (local-file (file-relative-name
@@ -181,11 +183,18 @@
                      ;; pep8 command
                      ,@(if pep8-exists `("pep8" "--ignore=E124,E265,E701,E702"
                                          ,(concat "--max-line-length=" (format "%d" python-column-width)) ,local-file))
+                     ;; separate again
+                     ,@(if (and pep8-exists pylint-exists) `(,cmd-sep))
+                     ;; pylint command
+                     ,@(if pylint-exists `("pylint" "-f " "parseable" "-r n"
+                                           "--extension-pkg-whitelist=numpy"
+                                           "--disable=R0913,C0103,C0302"
+                                           ,local-file))
                      ;; properly wrap the combined command
                      ,@(if (not (eq system-type 'windows-nt)) '(" ; )"))
                      ) " ")))))
           rv)
-      (message "Warning:  flymake won't run because neither pyflakes nor pep8 were found"))))
+      (message "Warning:  flymake won't run because neither pyflakes nor pep8 nor pylint were found"))))
 
 
 (add-hook 'python-mode-hook (lambda ()
