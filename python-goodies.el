@@ -424,36 +424,35 @@ function that takes a single argument "
 (defun virtualenv-hook ()
   "This should be run before any comints are run.  And re-run
 when opening a new file."
-  (let* ((used-virtualenv
-          (if auto-detect-virtualenv (detect-virtualenv (buffer-file-name))
-            python-shell-virtualenv-path)))
-    (setq python-shell-virtualenv-path used-virtualenv)
+  (if auto-detect-virtualenv
+      (setq python-shell-virtualenv-path (detect-virtualenv (buffer-file-name))))
+  
+  ;; the following doesn't work because pymacs has already been called at this point
+  ;; (make-local-variable 'pymacs-python-command)
+  ;; (setq pymacs-python-command (concat python-shell-virtualenv-path bin-python))
+  
+  ;; a global variable that will be skipped by python-shell-setup-codes if nil
+  (setq virtualenv-activate-command nil)
+  (add-to-list 'python-shell-setup-codes 'virtualenv-activate-command)
+  
+  ;; If we've detected a virtualenv specialize setup codes to
+  ;; activate it in all new shells.
+  (if (file-exists-p (concat python-shell-virtualenv-path bin-python-dir "activate_this.py")) (progn
+     (setq virtualenv-activate-command
+           (concat "af = \"" python-shell-virtualenv-path bin-python-dir
+                   "activate_this.py\"; execfile(af, dict(__file__=af))\n"))))
 
-    ;; the following doesn't work because pymacs has already been called at this point
-    ;; (make-local-variable 'pymacs-python-command) (setq pymacs-python-command (concat used-virtualenv bin-python))
-
-    ;; a global variable that will be skipped by python-shell-setup-codes if nil
-    (setq virtualenv-activate-command nil)
-    (add-to-list 'python-shell-setup-codes 'virtualenv-activate-command)
-
-    ;; If we've detected a virtualenv specialize setup codes to
-    ;; activate it in all new shells.
-    (if (file-exists-p (concat used-virtualenv bin-python-dir "activate_this.py")) (progn
-      (setq virtualenv-activate-command
-            (concat "af = \"" used-virtualenv bin-python-dir
-                    "activate_this.py\"; execfile(af, dict(__file__=af))\n"))))
-
-    ;; finally, if we're using ipython, update the current value of python-shell-interpreter-args
-    (if (eq python-inferior-shell-type 'ipython)
-        (let ((ipython-script
-               (expand-file-name "ipython-script.py"
-                                 (format "%s/%s" used-virtualenv bin-python-dir))))
-          (if (not (file-exists-p ipython-script))
-              (message (concat "Warning:  inferior-shell-type is 'ipython but we can't find"
-                               "ipython-script.py in the virtualenv.\nOn Windows make sure "
-                               "you've installed it with pip install ipython --no-use-wheel."))
-            ;; else call the interpreter with the ipython inside the virtualenv
-            (setq python-shell-interpreter-args (concat "-u " ipython-script)))))))
+  ;; finally, if we're using ipython, update the current value of python-shell-interpreter-args
+  (if (eq python-inferior-shell-type 'ipython)
+      (let ((ipython-script
+             (expand-file-name "ipython-script.py"
+                               (format "%s/%s" python-shell-virtualenv-path bin-python-dir))))
+        (if (not (file-exists-p ipython-script))
+            (message (concat "Warning:  inferior-shell-type is 'ipython but we can't find"
+                             "ipython-script.py in the virtualenv.\nOn Windows make sure "
+                             "you've installed it with pip install ipython --no-use-wheel."))
+          ;; else call the interpreter with the ipython inside the virtualenv
+          (setq python-shell-interpreter-args (concat "-u " ipython-script))))))
 
 (defun set-virtualenv-in-rope-config (rope-config-filename virtualenv-dir)
   (let* ((activate-script-name (concat virtualenv-dir bin-python-dir "activate_this.py"))
