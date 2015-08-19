@@ -159,7 +159,7 @@
                         (if (executable-find "pylint") 't nil))))
     (if (not pyflakes-exists) (message "Warning:  pyflakes executable not found"))
     (if (not pep8-exists) (message "Warning:  pep8 executable not found"))
-    (if (not pylint-exists) (message "Warning:  pylint executable not found"))
+    (if (and python-use-pylint (not pylint-exists)) (message "Warning:  pylint executable not found"))
     (if (or pyflakes-exists pep8-exists pylint-exists)
         (let* ((temp-file (flymake-init-create-temp-buffer-copy
                            'flymake-create-temp-inplace))
