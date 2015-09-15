@@ -11,12 +11,12 @@
   :type 'integer
   )
 
-(defcustom pymacs-parent-dir 'nil
+(defcustom pymacs-parent-dir nil
   "Set this if you have pymacs/ropemacs installed"
   :type 'directory
   )
 
-(defcustom python-use-pylint 'nil
+(defcustom python-use-pylint nil
   "Use pylint with flymake"
   :type 'boolean)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
