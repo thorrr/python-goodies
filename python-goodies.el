@@ -269,7 +269,8 @@ argument"
   (let* ((orig (symbol-function 'get-buffer-process))
          (fn (lambda (_) process)))
     (fset 'get-buffer-process fn)
-    (ignore-errors (python-shell-send-setup-code))
+    ;;can't throw an error here since get-buffer-process has to be reset OR ELSE
+    (with-demoted-errors (python-shell-send-setup-code))
     (fset 'get-buffer-process orig)
     process))
 
