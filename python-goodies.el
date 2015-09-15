@@ -465,16 +465,13 @@ when opening a new file."
   ;; (make-local-variable 'pymacs-python-command)
   ;; (setq pymacs-python-command (concat python-shell-virtualenv-path bin-python))
   
-  ;; a global variable that will be skipped by python-shell-setup-codes if nil
-  (setq virtualenv-activate-command nil)
-  (add-to-list 'python-shell-setup-codes 'virtualenv-activate-command)
-  
   ;; If we've detected a virtualenv specialize setup codes to
   ;; activate it in all new shells.
   (if (file-exists-p (concat python-shell-virtualenv-path bin-python-dir "activate_this.py")) (progn
      (setq virtualenv-activate-command
            (concat "af = \"" python-shell-virtualenv-path bin-python-dir
-                   "activate_this.py\"; execfile(af, dict(__file__=af))\n"))))
+                   "activate_this.py\"; execfile(af, dict(__file__=af))\n"))
+       (add-to-list 'python-shell-setup-codes 'virtualenv-activate-command)))
 
   ;; finally, if we're using ipython, update the current value of python-shell-interpreter-args
   (if (eq python-inferior-shell-type 'ipython)
