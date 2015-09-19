@@ -149,7 +149,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Flymake
 ;;;;;;;;;;;;;;;;;;;;;;;;
-(add-to-list 'flymake-allowed-file-name-masks '("\\.py\\'" flymake-pyflakes-init))
+(add-hook 'python-mode-hook (lambda ()
+  (require 'flymake)
+  (add-to-list 'flymake-allowed-file-name-masks '("\\.py\\'" flymake-pyflakes-init))))
 
 (defun flymake-pyflakes-init ()
   (let ((pyflakes-exists (if (executable-find "pyflakes") 't nil))
