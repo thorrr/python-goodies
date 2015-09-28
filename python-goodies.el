@@ -123,19 +123,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Autocomplete
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(require 'ac-python) ;; a source for python auto-complete that comes from the
-                     ;; *Python* buffer or the unnamed "internal" process
-;;swallow errors because sometimes start of expression gets a region of (nil xxxxx)
-(defadvice ac-get-python-symbol-at-point (around ac-get-python-symbol-at-point-around activate)
-  (let ((out (ignore-errors ad-do-it)))
-    (if out out "")))
-
-(defun python-symbol-completions (symbol)
-  "Adapter to make ac-python work with gallina's python mode"
-  (let* ((process (python-get-named-else-internal-process))
-         (whole-line (buffer-substring-no-properties (line-beginning-position) (line-end-position)))
-         (psc (python-shell-completion-get-completions process whole-line symbol)))
-    (if psc psc "")))
+(require 'ac-python-async) ;; a source for python auto-complete that comes from the
+                           ;; *Python* buffer or the unnamed "internal" process
 
 (add-hook 'python-mode-hook (lambda ()
   ;; by default emacs uses the dictionary and other buffers as
