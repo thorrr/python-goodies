@@ -132,7 +132,8 @@
   (setq ac-sources (delete 'ac-source-abbrev ac-sources))
   (setq ac-sources (delete 'ac-source-dictionary ac-sources))
   (setq ac-sources (delete 'ac-source-words-in-same-mode-buffers ac-sources))
-  ;; (add-to-list 'ac-sources 'ac-source-yasnippet)
+  (require 'yasnippet)
+  (add-to-list 'ac-sources 'ac-source-yasnippet)
 ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
