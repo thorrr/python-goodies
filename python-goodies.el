@@ -4,7 +4,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Customizable variables
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(setq python-shell-prompt-detect-enabled nil)
 (defcustom python-column-width 80
   "Set fill-column to this value in python files.  Also, if using
   pep8, warn when columns exceed this value"
