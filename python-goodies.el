@@ -4,7 +4,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Customizable variables
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
+(setq python-shell-prompt-detect-enabled nil)
 (defcustom python-column-width 80
   "Set fill-column to this value in python files.  Also, if using
   pep8, warn when columns exceed this value"
@@ -219,14 +219,15 @@
   ;; will have a single internal process
   (virtualenv-hook)
   ;; source the file and then send our virtualenv and shell complete code to the internal process
-  (python-just-source-file (buffer-file-name)
-                           (python-shell-send-setup-code-to-process
-                            (python-shell-internal-get-or-create-process)))
+  ;; don't source a file if it's a python repl buffer or other non-filename buffer
+  (if (buffer-file-name) (progn
+    (python-just-source-file (buffer-file-name)
+                             (python-shell-send-setup-code-to-process
+                              (python-shell-internal-get-or-create-process)))
+    (if (check-for-virtualenv (python-get-named-else-internal-process))
+        (message (concat "Virtualenv successfully activated in internal python process for " (buffer-file-name))))))
   (if (check-for-readline (python-get-named-else-internal-process)) 't
     (message "Warning:  readline not detected on system.  autocomplete from process won't work.\npip install pyreadline to set it up"))
-  (if (check-for-virtualenv (python-get-named-else-internal-process))
-      (message (concat "Virtualenv successfully activated in internal python process for " (buffer-file-name))))
-
   (if pymacs-parent-dir (progn
     (pymacs-setup)
     (python-goodies-turn-on-ropemacs))) ;;something repeatedly calls pymacs-load "ropemacs" so you have to switch it back on
@@ -331,22 +332,14 @@ be sourced without relative import errors "
    Wraps Gallina's python-shell-send-buffer to let us specify
    both filename and process"
   (message (format "Sourcing %s into %s" filename process))
-  (defadvice python-shell-send-string (around psss-adapter activate)
-    "always pass in a second argument 'process' that's defined in the
-     caller's environment"
-        (if (boundp 'adv-process) (ad-set-arg 1 adv-process))
-        ad-do-it)
-  (with-temp-buffer
-    (if (ignore-errors (insert-file-contents filename)) (progn
-        (let ((adv-process process))
-          (python-shell-send-string
-           (python-add-package-directory-string filename) process)
-          (python-destroy-side-effects-in-buffer)
-          ;;advice affects python-shell-send string inside this function
-          (python-shell-send-buffer))
-       ))
-    ;;now clean up our advice
-    (ad-unadvise 'python-shell-send-string)))
+  (python-shell-send-string
+   (python-add-package-directory-string filename) process)
+  (let ((prog-string
+         (with-temp-buffer (progn
+           (insert-file-contents filename)
+           (python-destroy-side-effects-in-buffer)
+           (buffer-string)))))
+    (python-shell-send-string prog-string process)))
 
 
 ;; add the 'Hide All defs' menu item if we're in hide-show mode
