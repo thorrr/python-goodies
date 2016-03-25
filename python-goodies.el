@@ -62,7 +62,7 @@
     (message "Changing python-shell-inferior variables to support ipython")
     (setq
      python-shell-interpreter "ipython"
-     python-shell-interpreter-args "-i"
+     python-shell-interpreter-args ""
      python-shell-prompt-regexp "In \\[[0-9]+\\]: "
      python-shell-prompt-output-regexp "Out\\[[0-9]+\\]: "
      python-shell-completion-setup-code "from IPython.core.completerlib import module_completion"
