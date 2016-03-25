@@ -452,6 +452,7 @@ function that takes a single argument "
 when opening a new file."
   (make-local-variable 'python-shell-virtualenv-path)
   (setq python-shell-virtualenv-path nil)
+  (make-local-variable 'virtualenv-activate-command)
   (setq virtualenv-activate-command "")
   (add-to-list 'python-shell-setup-codes 'virtualenv-activate-command)
   (if auto-detect-virtualenv
