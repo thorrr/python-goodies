@@ -105,7 +105,8 @@
 ;;;;;;;;;;;;;
 ;; can't use python-shell-extra-pythonpaths because these have to be set before we require 'pymacs
 (defun pymacs-setup ()
-  (setq _python-goodies-pymacs-initiated nil)
+  (if (not (boundp '_python-goodies-pymacs-initiated))
+      (setq _python-goodies-pymacs-initiated nil))
   (if (and pymacs-parent-dir
            (not _python-goodies-pymacs-initiated)) (progn
     (setenv "PYTHONPATH" (concat
