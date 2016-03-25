@@ -192,7 +192,8 @@
                      ,@(if (not (eq system-type 'windows-nt)) '(" ; )"))
                      ) " ")))))
           rv)
-      (message "Warning:  flymake won't run because neither pyflakes nor pep8 nor pylint were found"))))
+      (progn
+        (message "Warning:  flymake won't run because neither pyflakes nor pep8 nor pylint were found") nil))))
 
 
 (add-hook 'python-mode-hook (lambda ()
