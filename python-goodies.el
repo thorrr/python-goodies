@@ -270,13 +270,15 @@ argument"
 
 (defun check-for-readline (process)
   "return 't if we can import readline.  if we can't autocomplete will be silently broken"
-  (let ((repl-out (python-shell-send-string-no-output "import readline;''" process)))
-    (if (string-match "^\\(>>> \\)*''" repl-out) 't nil)))
+  (if (not process) (progn (message "warning:  no process in check-for-readline") nil)
+    (let ((repl-out (python-shell-send-string-no-output "import readline;''" process)))
+      (if (string-match "^\\(>>> \\)*''" repl-out) 't nil))))
 
 (defun check-for-virtualenv (process)
   "return 't if this process is a virtualenv."
-  (let ((repl-out (python-shell-send-string-no-output "import sys;  hasattr(sys, 'real_prefix')" process)))
-    (string= repl-out "True")))
+  (if (not process) (progn (message "warning:  no process in check-for-virtualenv") nil)
+    (let ((repl-out (python-shell-send-string-no-output "import sys;  hasattr(sys, 'real_prefix')" process)))
+      (string= repl-out "True"))))
 
 ;; This equivalent function doesn't exist in Gallina's code
 (defun python-get-named-else-internal-process ()
@@ -328,19 +330,22 @@ be sourced without relative import errors "
     (concat "import sys;\nif sys.path.count('" package-directory "') == 0:\n"
                    "  sys.path.append('" package-directory  "')\n")))
 
+
 (defun python-just-source-file (filename process)
   "Force process to evaluate filename but don't run __main__ or any other code that can have side effects.
    Wraps Gallina's python-shell-send-buffer to let us specify
    both filename and process"
-  (message (format "Sourcing %s into %s" filename process))
-  (python-shell-send-string
-   (python-add-package-directory-string filename) process)
-  (let ((prog-string
-         (with-temp-buffer (progn
-           (insert-file-contents filename)
-           (python-destroy-side-effects-in-buffer)
-           (buffer-string)))))
-    (python-shell-send-string prog-string process)))
+  (if (not process) (message (concat "warning:  internal process doesn't exist for" filename "; not sourcing"))
+    (progn
+      (message (format "Sourcing %s into %s" filename process))
+      (python-shell-send-string
+       (python-add-package-directory-string filename) process)
+      (let ((prog-string
+             (with-temp-buffer (progn
+               (insert-file-contents filename)
+               (python-destroy-side-effects-in-buffer)
+               (buffer-string)))))
+        (python-shell-send-string prog-string process)))))
 
 
 ;; add the 'Hide All defs' menu item if we're in hide-show mode
@@ -445,6 +450,10 @@ function that takes a single argument "
 (defun virtualenv-hook ()
   "This should be run before any comints are run.  And re-run
 when opening a new file."
+  (make-local-variable 'python-shell-virtualenv-path)
+  (setq python-shell-virtualenv-path nil)
+  (setq virtualenv-activate-command "")
+  (add-to-list 'python-shell-setup-codes 'virtualenv-activate-command)
   (if auto-detect-virtualenv
       (setq python-shell-virtualenv-path (detect-virtualenv (buffer-file-name))))
   
@@ -458,7 +467,7 @@ when opening a new file."
      (setq virtualenv-activate-command
            (concat "af = \"" python-shell-virtualenv-path bin-python-dir
                    "activate_this.py\"; execfile(af, dict(__file__=af))\n"))
-       (add-to-list 'python-shell-setup-codes 'virtualenv-activate-command)))
+     ))
 
   ;; finally, if we're using ipython, update the current value of python-shell-interpreter-args
   (if (eq python-inferior-shell-type 'ipython)
