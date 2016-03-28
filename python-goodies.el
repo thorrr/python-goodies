@@ -336,16 +336,18 @@ be sourced without relative import errors "
    Wraps Gallina's python-shell-send-buffer to let us specify
    both filename and process"
   (if (not process) (message (concat "warning:  internal process doesn't exist for" filename "; not sourcing"))
-    (progn
-      (message (format "Sourcing %s into %s" filename process))
-      (python-shell-send-string
-       (python-add-package-directory-string filename) process)
-      (let ((prog-string
-             (with-temp-buffer (progn
-               (insert-file-contents filename)
-               (python-destroy-side-effects-in-buffer)
-               (buffer-string)))))
-        (python-shell-send-string prog-string process)))))
+    (if (not (file-exists-p filename))
+        (message (concat "INFO:  not sourcing " filename " because it hasn't been saved yet."))
+      (progn
+        (message (format "Sourcing %s into %s" filename process))
+        (python-shell-send-string
+         (python-add-package-directory-string filename) process)
+        (let ((prog-string
+               (with-temp-buffer (progn
+                 (insert-file-contents filename)
+                 (python-destroy-side-effects-in-buffer)
+                 (buffer-string)))))
+          (python-shell-send-string prog-string process))))))
 
 
 ;; add the 'Hide All defs' menu item if we're in hide-show mode
