@@ -357,13 +357,16 @@ be sourced without relative import errors "
                  (insert-file-contents filename)
                  (python-destroy-side-effects-in-buffer)
                  (buffer-string)))))
-          (python-shell-send-string prog-string process))))))
+          (python-shell-send-string prog-string process)))))
+  't)
 
 (defun python-source-file-to-internal-process (filename)
   "send a file to the internal process with the proper directory setup code"
-  (python-just-source-file (buffer-file-name)
-                           (python-shell-send-setup-code-to-process
-                            (python-shell-internal-get-or-create-process))))
+  (let ((internal-process (python-shell-internal-get-or-create-process)))
+    ;; this is redundant but harmless.  could put in python-shell-internal-get-or-create-process
+    (python-shell-send-string (python-add-package-directory-string filename))
+    ;; now send the actual code inside filename
+    (python-just-source-file filename (python-shell-send-setup-code-to-process internal-process))))
 
 (if auto-python-just-source-file (add-hook 'after-save-hook (lambda ()
   (python-source-file-to-internal-process (buffer-file-name)))))
