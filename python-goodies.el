@@ -18,6 +18,11 @@
 (defcustom python-use-pylint nil
   "Use pylint with flymake"
   :type 'boolean)
+
+(defcustom auto-python-just-source-file nil
+  "Automatically run python-just-source-file periodically"
+  :type 'boolean)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Python specific keybindings
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -222,9 +227,7 @@
   ;; source the file and then send our virtualenv and shell complete code to the internal process
   ;; don't source a file if it's a python repl buffer or other non-filename buffer
   (if (buffer-file-name) (progn
-    (python-just-source-file (buffer-file-name)
-                             (python-shell-send-setup-code-to-process
-                              (python-shell-internal-get-or-create-process)))
+    (python-source-file-to-internal-process (buffer-file-name))
     (if (check-for-virtualenv (python-get-named-else-internal-process))
         (message (concat "Virtualenv successfully activated in internal python process for " (buffer-file-name))))))
   (if (check-for-readline (python-get-named-else-internal-process)) 't
@@ -349,6 +352,14 @@ be sourced without relative import errors "
                  (buffer-string)))))
           (python-shell-send-string prog-string process))))))
 
+(defun python-source-file-to-internal-process (filename)
+  "send a file to the internal process with the proper directory setup code"
+  (python-just-source-file (buffer-file-name)
+                           (python-shell-send-setup-code-to-process
+                            (python-shell-internal-get-or-create-process))))
+
+(if auto-python-just-source-file (add-hook 'after-save-hook (lambda ()
+  (python-source-file-to-internal-process (buffer-file-name)))))
 
 ;; add the 'Hide All defs' menu item if we're in hide-show mode
 (defun hide-all-defs ()
