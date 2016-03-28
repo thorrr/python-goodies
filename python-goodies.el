@@ -338,7 +338,7 @@ directory.  This allows modules deep in the project hierarchy to
 be sourced without relative import errors "
   (let ((package-directory (detect-package-directory filename)))
     (concat "import sys;\nif sys.path.count('" package-directory "') == 0:\n"
-                   "  sys.path.append('" package-directory  "')\n")))
+                   "  sys.path.insert(0, '" package-directory  "')\n")))
 
 
 (defun python-just-source-file (filename process)
