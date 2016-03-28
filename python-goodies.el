@@ -235,7 +235,14 @@
   (if pymacs-parent-dir (progn
     (pymacs-setup)
     (python-goodies-turn-on-ropemacs))) ;;something repeatedly calls pymacs-load "ropemacs" so you have to switch it back on
-))
+  ))
+
+;; make sure our inferior buffers are properly virtualenv aware too
+(add-hook 'inferior-python-mode-hook (lambda ()
+  (python-shell-setup python-inferior-shell-type)
+  (setq python-shell-virtualenv-path (executable-find bin-python))
+  (virtualenv-hook)))
+
 
 (add-hook 'inferior-python-mode-hook (lambda ()
   ;; jump to the bottom of the comint buffer if you start typing
@@ -463,9 +470,8 @@ function that takes a single argument "
 (defun virtualenv-hook ()
   "This should be run before any comints are run.  And re-run
 when opening a new file."
-  (make-local-variable 'python-shell-virtualenv-path)
-  (setq python-shell-virtualenv-path nil)
-  (setq virtualenv-activate-command "")
+  (set (make-local-variable 'python-shell-virtualenv-path) nil)
+  (set  (make-local-variable 'virtualenv-activate-command) "")
   (add-to-list 'python-shell-setup-codes 'virtualenv-activate-command)
   (if auto-detect-virtualenv
       (setq python-shell-virtualenv-path (detect-virtualenv (buffer-file-name))))
@@ -488,7 +494,7 @@ when opening a new file."
              (expand-file-name "ipython-script.py"
                                (format "%s/%s" python-shell-virtualenv-path bin-python-dir))))
         (if (not (file-exists-p ipython-script))
-            (message (concat "Warning:  inferior-shell-type is 'ipython but we can't find"
+            (message (concat "Warning:  inferior-shell-type is 'ipython but we can't find "
                              "ipython-script.py in the virtualenv.\nOn Windows make sure "
                              "you've installed it with pip install ipython --no-use-wheel."))
           ;; else call the interpreter with the ipython inside the virtualenv
