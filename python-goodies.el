@@ -378,6 +378,10 @@ be sourced without relative import errors "
 (if auto-python-just-source-file (add-hook 'after-save-hook (lambda ()
   (python-source-file-to-internal-process (buffer-file-name)))))
 
+(defun python-switch-to-internal-process ()
+  (interactive)
+  (switch-to-buffer python-shell-internal-buffer))
+
 ;; add the 'Hide All defs' menu item if we're in hide-show mode
 (defun hide-all-defs ()
   (interactive)
