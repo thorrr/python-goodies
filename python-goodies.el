@@ -314,18 +314,24 @@ namedtuple(...) plus the following scope are allowed."
           (side-effect-start nil))
       (goto-char (point-min))
       (while more-lines
-        (let ((is-keyword (member 't (mapcar (lambda (keyword) (looking-at keyword)) keywords))))
-          (if (and (looking-at "[[:alpha:]]")
-                   (not is-keyword))
-              ;; set side-effect-start unless we're in the middle of a side effect block
-              (if (not side-effect-start)
-                  (setq side-effect-start (point)))
-            ;; else if we are finally looking at a keyword, delete
-            ;; everything between here and the start of the side
-            ;; effect
-            (if (and is-keyword side-effect-start) (progn
-              (delete-region side-effect-start (point))
-              (setq side-effect-start nil)))))
+        (let ((is-start-of-line-token (looking-at "[[:alpha:]]"))
+              (is-keyword (member 't (mapcar (lambda (keyword) (looking-at keyword)) keywords))))
+          ;; detect the state of the current line and act
+          (cond ;; start deleting - we're seeing a side effect
+                ((and is-start-of-line-token (not is-keyword) (not side-effect-start))
+                 (setq side-effect-start (point)))
+                ;; stop deleting - we're inside a side effect but we've hit the next keyword
+                ((and is-start-of-line-token is-keyword side-effect-start)
+                 (delete-region side-effect-start (point))
+                 (setq side-effect-start nil))))
+        ;;now move cursor past any triple quotes that start on this line
+        (if (looking-at ".*\"\"\"") (progn
+              (re-search-forward ".*\"\"\"" nil)
+              (re-search-forward ".*\"\"\"" nil 'eof)))
+        (if (looking-at ".*'''") (progn
+              (re-search-forward ".*'''" nil)
+              (re-search-forward ".*'''" nil 'eof)))
+        ;;then bump to next line
         (setq more-lines (= 0 (forward-line 1))))
       ;;finally, delete the last region if we saw something before EOF
       (if side-effect-start
