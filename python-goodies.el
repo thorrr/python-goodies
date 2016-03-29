@@ -228,6 +228,9 @@
   ;; don't source a file if it's a python repl buffer or other non-filename buffer
   (if (buffer-file-name) (progn
     (python-source-file-to-internal-process (buffer-file-name))
+    ;; send an newline to clear the internal buffer because ipython sometimes hangs with a
+    ;; "WARNING: Attempting to work in a virtualenv" message
+    (run-at-time "5 sec" nil 'python-shell-send-string "\n" python-shell-internal-buffer)
     (if (check-for-virtualenv (python-get-named-else-internal-process))
         (message (concat "Virtualenv successfully activated in internal python process for " (buffer-file-name))))))
   (if (check-for-readline (python-get-named-else-internal-process)) 't
