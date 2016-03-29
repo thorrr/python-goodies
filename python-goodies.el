@@ -364,9 +364,10 @@ be sourced without relative import errors "
   "send a file to the internal process with the proper directory setup code"
   (let ((internal-process (python-shell-internal-get-or-create-process)))
     ;; this is redundant but harmless.  could put in python-shell-internal-get-or-create-process
-    (python-shell-send-string (python-add-package-directory-string filename))
+    (python-shell-send-setup-code-to-process internal-process)
+    (python-shell-send-string (python-add-package-directory-string filename) internal-process)
     ;; now send the actual code inside filename
-    (python-just-source-file filename (python-shell-send-setup-code-to-process internal-process))))
+    (python-just-source-file filename internal-process)))
 
 (if auto-python-just-source-file (add-hook 'after-save-hook (lambda ()
   (python-source-file-to-internal-process (buffer-file-name)))))
