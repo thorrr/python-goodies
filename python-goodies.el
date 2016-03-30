@@ -18,6 +18,11 @@
 (defcustom python-use-pylint nil
   "Use pylint with flymake"
   :type 'boolean)
+
+(defcustom auto-python-just-source-file nil
+  "Automatically run python-just-source-file periodically"
+  :type 'boolean)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Python specific keybindings
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -222,9 +227,10 @@
   ;; source the file and then send our virtualenv and shell complete code to the internal process
   ;; don't source a file if it's a python repl buffer or other non-filename buffer
   (if (buffer-file-name) (progn
-    (python-just-source-file (buffer-file-name)
-                             (python-shell-send-setup-code-to-process
-                              (python-shell-internal-get-or-create-process)))
+    (python-source-file-to-internal-process (buffer-file-name))
+    ;; send an newline to clear the internal buffer because ipython sometimes hangs with a
+    ;; "WARNING: Attempting to work in a virtualenv" message
+    (run-at-time "5 sec" nil 'python-shell-send-string "\n" python-shell-internal-buffer)
     (if (check-for-virtualenv (python-get-named-else-internal-process))
         (message (concat "Virtualenv successfully activated in internal python process for " (buffer-file-name))))))
   (if (check-for-readline (python-get-named-else-internal-process)) 't
@@ -232,7 +238,14 @@
   (if pymacs-parent-dir (progn
     (pymacs-setup)
     (python-goodies-turn-on-ropemacs))) ;;something repeatedly calls pymacs-load "ropemacs" so you have to switch it back on
-))
+  ))
+
+;; make sure our inferior buffers are properly virtualenv aware too
+(add-hook 'inferior-python-mode-hook (lambda ()
+  (python-shell-setup python-inferior-shell-type)
+  (setq python-shell-virtualenv-path (executable-find bin-python))
+  (virtualenv-hook)))
+
 
 (add-hook 'inferior-python-mode-hook (lambda ()
   ;; jump to the bottom of the comint buffer if you start typing
@@ -304,18 +317,24 @@ namedtuple(...) plus the following scope are allowed."
           (side-effect-start nil))
       (goto-char (point-min))
       (while more-lines
-        (let ((is-keyword (member 't (mapcar (lambda (keyword) (looking-at keyword)) keywords))))
-          (if (and (looking-at "[[:alpha:]]")
-                   (not is-keyword))
-              ;; set side-effect-start unless we're in the middle of a side effect block
-              (if (not side-effect-start)
-                  (setq side-effect-start (point)))
-            ;; else if we are finally looking at a keyword, delete
-            ;; everything between here and the start of the side
-            ;; effect
-            (if (and is-keyword side-effect-start) (progn
-              (delete-region side-effect-start (point))
-              (setq side-effect-start nil)))))
+        (let ((is-start-of-line-token (looking-at "[[:alpha:]]"))
+              (is-keyword (member 't (mapcar (lambda (keyword) (looking-at keyword)) keywords))))
+          ;; detect the state of the current line and act
+          (cond ;; start deleting - we're seeing a side effect
+                ((and is-start-of-line-token (not is-keyword) (not side-effect-start))
+                 (setq side-effect-start (point)))
+                ;; stop deleting - we're inside a side effect but we've hit the next keyword
+                ((and is-start-of-line-token is-keyword side-effect-start)
+                 (delete-region side-effect-start (point))
+                 (setq side-effect-start nil))))
+        ;;now move cursor past any triple quotes that start on this line
+        (if (looking-at ".*\"\"\"") (progn
+              (re-search-forward ".*\"\"\"" nil)
+              (re-search-forward ".*\"\"\"" nil 'eof)))
+        (if (looking-at ".*'''") (progn
+              (re-search-forward ".*'''" nil)
+              (re-search-forward ".*'''" nil 'eof)))
+        ;;then bump to next line
         (setq more-lines (= 0 (forward-line 1))))
       ;;finally, delete the last region if we saw something before EOF
       (if side-effect-start
@@ -328,7 +347,7 @@ directory.  This allows modules deep in the project hierarchy to
 be sourced without relative import errors "
   (let ((package-directory (detect-package-directory filename)))
     (concat "import sys;\nif sys.path.count('" package-directory "') == 0:\n"
-                   "  sys.path.append('" package-directory  "')\n")))
+                   "  sys.path.insert(0, '" package-directory  "')\n")))
 
 
 (defun python-just-source-file (filename process)
@@ -336,17 +355,35 @@ be sourced without relative import errors "
    Wraps Gallina's python-shell-send-buffer to let us specify
    both filename and process"
   (if (not process) (message (concat "warning:  internal process doesn't exist for" filename "; not sourcing"))
-    (progn
-      (message (format "Sourcing %s into %s" filename process))
-      (python-shell-send-string
-       (python-add-package-directory-string filename) process)
-      (let ((prog-string
-             (with-temp-buffer (progn
-               (insert-file-contents filename)
-               (python-destroy-side-effects-in-buffer)
-               (buffer-string)))))
-        (python-shell-send-string prog-string process)))))
+    (if (not (file-exists-p filename))
+        (message (concat "INFO:  not sourcing " filename " because it hasn't been saved yet."))
+      (progn
+        (message (format "Sourcing %s into %s" filename process))
+        (python-shell-send-string
+         (python-add-package-directory-string filename) process)
+        (let ((prog-string
+               (with-temp-buffer (progn
+                 (insert-file-contents filename)
+                 (python-destroy-side-effects-in-buffer)
+                 (buffer-string)))))
+          (python-shell-send-string prog-string process)))))
+  't)
 
+(defun python-source-file-to-internal-process (filename)
+  "send a file to the internal process with the proper directory setup code"
+  (let ((internal-process (python-shell-internal-get-or-create-process)))
+    ;; this is redundant but harmless.  could put in python-shell-internal-get-or-create-process
+    (python-shell-send-setup-code-to-process internal-process)
+    (python-shell-send-string (python-add-package-directory-string filename) internal-process)
+    ;; now send the actual code inside filename
+    (python-just-source-file filename internal-process)))
+
+(if auto-python-just-source-file (add-hook 'after-save-hook (lambda ()
+  (python-source-file-to-internal-process (buffer-file-name)))))
+
+(defun python-switch-to-internal-process ()
+  (interactive)
+  (switch-to-buffer python-shell-internal-buffer))
 
 ;; add the 'Hide All defs' menu item if we're in hide-show mode
 (defun hide-all-defs ()
@@ -450,10 +487,8 @@ function that takes a single argument "
 (defun virtualenv-hook ()
   "This should be run before any comints are run.  And re-run
 when opening a new file."
-  (make-local-variable 'python-shell-virtualenv-path)
-  (setq python-shell-virtualenv-path nil)
-  (make-local-variable 'virtualenv-activate-command)
-  (setq virtualenv-activate-command "")
+  (set (make-local-variable 'python-shell-virtualenv-path) nil)
+  (set  (make-local-variable 'virtualenv-activate-command) "")
   (add-to-list 'python-shell-setup-codes 'virtualenv-activate-command)
   (if auto-detect-virtualenv
       (setq python-shell-virtualenv-path (detect-virtualenv (buffer-file-name))))
@@ -476,7 +511,7 @@ when opening a new file."
              (expand-file-name "ipython-script.py"
                                (format "%s/%s" python-shell-virtualenv-path bin-python-dir))))
         (if (not (file-exists-p ipython-script))
-            (message (concat "Warning:  inferior-shell-type is 'ipython but we can't find"
+            (message (concat "Warning:  inferior-shell-type is 'ipython but we can't find "
                              "ipython-script.py in the virtualenv.\nOn Windows make sure "
                              "you've installed it with pip install ipython --no-use-wheel."))
           ;; else call the interpreter with the ipython inside the virtualenv
