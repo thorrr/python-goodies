@@ -303,8 +303,8 @@ start an internal process and return that."
 
 (defun python-destroy-side-effects-in-buffer ()
   "In the current buffer get rid of any code that potentially can
-lead to side effects.  Only top level keywords or MyClass =
-namedtuple(...) plus the following scope are allowed."
+lead to side effects.  Only top level keywords plus the following
+scope or MyClass = namedtuple(...) are allowed."
   (let ((keywords
          ;; must have spaces after keyword so
          ;; defaultString = "foo"
