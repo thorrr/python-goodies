@@ -230,7 +230,7 @@
     (python-source-file-to-internal-process (buffer-file-name))
     ;; send an newline to clear the internal buffer because ipython sometimes hangs with a
     ;; "WARNING: Attempting to work in a virtualenv" message
-    (run-at-time "5 sec" nil 'python-shell-send-string "\n" python-shell-internal-buffer)
+    (run-at-time "3 sec" nil 'python-shell-send-string "\n" python-shell-internal-buffer)
     (if (check-for-virtualenv (python-get-named-else-internal-process))
         (message (concat "Virtualenv successfully activated in internal python process for " (buffer-file-name))))))
   (if (check-for-readline (python-get-named-else-internal-process)) 't
@@ -298,7 +298,7 @@ argument"
   "return the current global process if there is one.  Otherwise,
 start an internal process and return that."
   (let ((process (or (python-shell-get-process)
-                     (python-shell-internal-get-or-create-process))))                
+                     (python-shell-internal-get-or-create-process))))
     process))
 
 (defun python-destroy-side-effects-in-buffer ()
