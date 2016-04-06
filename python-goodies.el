@@ -316,6 +316,14 @@ scope or MyClass = namedtuple(...) are allowed."
     (let ((more-lines 't)
           (side-effect-start nil))
       (goto-char (point-min))
+      ;; first, get rid of if __name__ == "__main__":
+      (save-excursion
+        (when (python-nav-if-name-main)
+          (delete-region (point) (progn
+            (python-nav-forward-sexp-safe)
+            (forward-line 1)
+            (point)))))
+      ;; now, iterate through the buffer line-by-line
       (while more-lines
         (let ((is-start-of-line-token (looking-at "[[:alpha:]]"))
               (is-keyword (member 't (mapcar (lambda (keyword) (looking-at keyword)) keywords))))
