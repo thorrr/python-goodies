@@ -15,9 +15,27 @@
   :type 'directory
   )
 
+(defcustom python-use-pyflakes nil
+  "Use pylint with flymake"
+  :type 'boolean)
+
+(defcustom python-use-pep8 nil
+  "Use pep8 with flymake"
+  :type 'boolean)
+
+(defcustom python-pep8-options "--ignore=E124,E265,E701,E702,E129"
+  "pep8 command line options"
+  :type 'string)
+
 (defcustom python-use-pylint nil
   "Use pylint with flymake"
   :type 'boolean)
+
+(defcustom python-pylint-options '("-f " "parseable" "-r n"
+                                   "--extension-pkg-whitelist=numpy"
+                                   "--disable=R0913,C0103,C0302")
+  "pylint command line options"
+  )
 
 (defcustom auto-python-just-source-file nil
   "Automatically run python-just-source-file periodically"
@@ -151,12 +169,13 @@
 (defun flymake-pyflakes-init ()
   (let ((pyflakes-exists (if (executable-find "pyflakes") 't nil))
         (pep8-exists (if (executable-find "pep8") 't nil))
-        (pylint-exists (and
-                        python-use-pylint
-                        (if (executable-find "pylint") 't nil))))
-    (if (not pyflakes-exists) (message "Warning:  pyflakes executable not found"))
-    (if (not pep8-exists) (message "Warning:  pep8 executable not found"))
-    (if (and python-use-pylint (not pylint-exists)) (message "Warning:  pylint executable not found"))
+        (pylint-exists (if (executable-find "pylint") 't nil)))
+    (if (and python-use-pyflakes (not pyflakes-exists))
+        (message "Warning:  pyflakes executable not found"))
+    (if (and python-use-pep8 (not pep8-exists))
+        (message "Warning:  pep8 executable not found"))
+    (if (and python-use-pylint (not pylint-exists))
+        (message "Warning:  pylint executable not found"))
     (if (or pyflakes-exists pep8-exists pylint-exists)
         (let* ((temp-file (flymake-init-create-temp-buffer-copy
                            'flymake-create-temp-inplace))
@@ -184,14 +203,15 @@
                      ;; separate only if both commands exist
                      ,@(if (and pyflakes-exists pep8-exists) `(,cmd-sep))
                      ;; pep8 command
-                     ,@(if pep8-exists `("pep8" "--ignore=E124,E265,E701,E702,E129"
+                     ,@(if pep8-exists `("pep8" ,python-pep8-options
                                          ,(concat "--max-line-length=" (format "%d" python-column-width)) ,local-file))
                      ;; separate again
                      ,@(if (and pep8-exists pylint-exists) `(,cmd-sep))
                      ;; pylint command
-                     ,@(if pylint-exists `("pylint" "-f " "parseable" "-r n"
-                                           "--extension-pkg-whitelist=numpy"
-                                           "--disable=R0913,C0103,C0302"
+                     ,@(if pylint-exists `("pylint" ,@python-pylint-options
+                                           ;; "-f " "parseable" "-r n"
+                                           ;; "--extension-pkg-whitelist=numpy"
+                                           ;; "--disable=R0913,C0103,C0302"
                                            ,local-file))
                      ;; properly wrap the combined command
                      ,@(if (not (eq system-type 'windows-nt)) '(" ; )"))
