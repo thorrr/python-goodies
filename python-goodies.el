@@ -214,8 +214,11 @@
                      ,@(if (and use-pylint (or use-pyflakes use-pep8)) `(,cmd-sep))
                      ;; pylint command - virtualenv friendly
                      ,@(if use-pylint `(;; equivalent to 'python $(where pylint)' inside virtualenv
-                                        ,(concat python-shell-virtualenv-path bin-python)
-                                        ,(concat (file-name-directory (executable-find "pylint")) "pylint")
+                                        ;; ,(concat python-shell-virtualenv-path bin-python)
+                                        "python"
+                                        ;; ,(concat (file-name-directory (executable-find "pylint")) "pylint") ;; doesn't work in windows, raw pylint script isn't installed
+                                        "-c 'from pylint import run_pylint; import sys; sys.exit(run_pylint())'"
+                                        ;; "pylint"
                                         ,@pylint-options-list ,local-file))
                      ;; properly wrap the combined command
                      ,@(if (not (eq system-type 'windows-nt)) '(" ; )"))
