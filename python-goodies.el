@@ -23,20 +23,19 @@
   "Use pep8 with flymake"
   :type 'boolean)
 
-(defcustom python-pep8-options '("--ignore=E124,E265,E701,E702,E129")
+(defcustom python-pep8-options "--ignore=E124,E265,E701,E702,E129"
   "pep8 command line options"
-  ;;  :type 'string
-  )
+   :type 'string)
 
 (defcustom python-use-pylint nil
   "Use pylint with flymake"
   :type 'boolean)
 
-(defcustom python-pylint-options '("-f " "parseable" "-r n"
-                                   "--extension-pkg-whitelist=numpy"
-                                   "--disable=R0913,C0103,C0302,C0111,W0511")
+(defcustom python-pylint-options "--output-format=parseable --reports=n\
+                                  --extension-pkg-whitelist=numpy\
+                                  --disable=R0913,C0103,C0302,C0111,W0511"
   "pylint command line options"
-  )
+  :type 'string)
 
 (defcustom auto-python-just-source-file nil
   "Automatically run python-just-source-file periodically"
@@ -189,6 +188,8 @@
                (shell (if (eq system-type 'windows-nt) "cmd" "bash"))
                (cmd-switch (if (eq system-type 'windows-nt) "/c" "-c"))
                (cmd-sep (if (eq system-type 'windows-nt) "&" ";"))
+               (pep8-options-list (split-string python-pep8-options))
+               (pylint-options-list (split-string python-pylint-options))
                ;; Build a command that runs pyflakes or pep8 or both.  First argument is
                ;; the shell to run: bash or cmd.  Second argument is a list of arguments
                ;; to the shell.  For bash it _must_ have exactly two elements: "-c" and a
@@ -207,16 +208,12 @@
                      ;; separate if there was a previous command
                      ,@(if (and use-pep8 use-pyflakes) `(,cmd-sep))
                      ;; pep8 command
-                     ,@(if use-pep8 `("pep8" ,python-pep8-options
+                     ,@(if use-pep8 `("pep8" ,@pep8-options-list
                                       ,(concat "--max-line-length=" (format "%d" python-column-width)) ,local-file))
                      ;; separate again - check for any previous command
                      ,@(if (and use-pylint (or use-pyflakes use-pep8)) `(,cmd-sep))
                      ;; pylint command
-                     ,@(if use-pylint `("pylint" ,@python-pylint-options
-                                        ;; "-f " "parseable" "-r n"
-                                        ;; "--extension-pkg-whitelist=numpy"
-                                        ;; "--disable=R0913,C0103,C0302"
-                                        ,local-file))
+                     ,@(if use-pylint `("pylint" ,@pylint-options-list ,local-file))
                      ;; properly wrap the combined command
                      ,@(if (not (eq system-type 'windows-nt)) '(" ; )"))
                      ) " ")))))
