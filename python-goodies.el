@@ -23,9 +23,10 @@
   "Use pep8 with flymake"
   :type 'boolean)
 
-(defcustom python-pep8-options "--ignore=E124,E265,E701,E702,E129"
+(defcustom python-pep8-options '("--ignore=E124,E265,E701,E702,E129")
   "pep8 command line options"
-  :type 'string)
+  ;;  :type 'string
+  )
 
 (defcustom python-use-pylint nil
   "Use pylint with flymake"
@@ -33,7 +34,7 @@
 
 (defcustom python-pylint-options '("-f " "parseable" "-r n"
                                    "--extension-pkg-whitelist=numpy"
-                                   "--disable=R0913,C0103,C0302")
+                                   "--disable=R0913,C0103,C0302,C0111,W0511")
   "pylint command line options"
   )
 
@@ -167,16 +168,19 @@
   (add-to-list 'flymake-allowed-file-name-masks '("\\.py\\'" flymake-pyflakes-init))))
 
 (defun flymake-pyflakes-init ()
-  (let ((pyflakes-exists (if (executable-find "pyflakes") 't nil))
-        (pep8-exists (if (executable-find "pep8") 't nil))
-        (pylint-exists (if (executable-find "pylint") 't nil)))
+  (let* ((pyflakes-exists (if (executable-find "pyflakes") 't nil))
+         (pep8-exists (if (executable-find "pep8") 't nil))
+         (pylint-exists (if (executable-find "pylint") 't nil))
+         (use-pyflakes (and python-use-pyflakes pyflakes-exists))
+         (use-pep8 (and python-use-pep8 pep8-exists))
+         (use-pylint (and python-use-pylint pylint-exists)))
     (if (and python-use-pyflakes (not pyflakes-exists))
         (message "Warning:  pyflakes executable not found"))
     (if (and python-use-pep8 (not pep8-exists))
         (message "Warning:  pep8 executable not found"))
     (if (and python-use-pylint (not pylint-exists))
         (message "Warning:  pylint executable not found"))
-    (if (or pyflakes-exists pep8-exists pylint-exists)
+    (if (or use-pyflakes use-pep8 use-pylint)
         (let* ((temp-file (flymake-init-create-temp-buffer-copy
                            'flymake-create-temp-inplace))
                (local-file (file-relative-name
@@ -199,26 +203,26 @@
                    ,(mapconcat 'identity `(
                      ,@(if (not (eq system-type 'windows-nt)) '("( "))
                      ;; pyflakes command
-                     ,@(if pyflakes-exists `("pyflakes" ,local-file))
-                     ;; separate only if both commands exist
-                     ,@(if (and pyflakes-exists pep8-exists) `(,cmd-sep))
+                     ,@(if use-pyflakes `("pyflakes" ,local-file))
+                     ;; separate if there was a previous command
+                     ,@(if (and use-pep8 use-pyflakes) `(,cmd-sep))
                      ;; pep8 command
-                     ,@(if pep8-exists `("pep8" ,python-pep8-options
-                                         ,(concat "--max-line-length=" (format "%d" python-column-width)) ,local-file))
-                     ;; separate again
-                     ,@(if (and pep8-exists pylint-exists) `(,cmd-sep))
+                     ,@(if use-pep8 `("pep8" ,python-pep8-options
+                                      ,(concat "--max-line-length=" (format "%d" python-column-width)) ,local-file))
+                     ;; separate again - check for any previous command
+                     ,@(if (and use-pylint (or use-pyflakes use-pep8)) `(,cmd-sep))
                      ;; pylint command
-                     ,@(if pylint-exists `("pylint" ,@python-pylint-options
-                                           ;; "-f " "parseable" "-r n"
-                                           ;; "--extension-pkg-whitelist=numpy"
-                                           ;; "--disable=R0913,C0103,C0302"
-                                           ,local-file))
+                     ,@(if use-pylint `("pylint" ,@python-pylint-options
+                                        ;; "-f " "parseable" "-r n"
+                                        ;; "--extension-pkg-whitelist=numpy"
+                                        ;; "--disable=R0913,C0103,C0302"
+                                        ,local-file))
                      ;; properly wrap the combined command
                      ,@(if (not (eq system-type 'windows-nt)) '(" ; )"))
                      ) " ")))))
           rv)
-      (progn
-        (message "Warning:  flymake won't run because neither pyflakes nor pep8 nor pylint were found") nil))))
+      (progn (message
+         "Warning:  flymake won't run because neither pyflakes nor pep8 nor pylint were selected") nil))))
 
 
 (add-hook 'python-mode-hook (lambda ()
