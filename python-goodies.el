@@ -419,11 +419,12 @@ be sourced without relative import errors "
 (defun python-source-file-to-internal-process (filename)
   "send a file to the internal process with the proper directory setup code"
   (let ((internal-process (python-shell-internal-get-or-create-process)))
-    ;; this is redundant but harmless.  could put in python-shell-internal-get-or-create-process
-    (python-shell-send-setup-code-to-process internal-process)
-    (python-shell-send-string (python-add-package-directory-string filename) internal-process)
-    ;; now send the actual code inside filename
-    (python-just-source-file filename internal-process)))
+    ;; this resends setup codes if process exists, which is redundant but harmless
+    (if (not internal-process) (message (format "Warning - internal process is nil for %s" filename))
+      (python-shell-send-setup-code-to-process internal-process)
+      (python-shell-send-string (python-add-package-directory-string filename) internal-process)
+      ;; now send the actual code inside filename
+      (python-just-source-file filename internal-process))))
 
 (if auto-python-just-source-file (add-hook 'after-save-hook (lambda ()
   (python-source-file-to-internal-process (buffer-file-name)))))
@@ -496,7 +497,9 @@ be sourced without relative import errors "
               (if (file-regular-p (concat dir bin-python))
                   dir nil))
                  subdirs)))
-            (virtualenv-dir (car subdirs-that-have-bin/python)))
+            (virtualenv-dir (car subdirs-that-have-bin/python))
+            ;; sometimes we're left with a relative path i.e. scripts/lib/..
+            (virtualenv-dir (if virtualenv-dir (expand-file-name virtualenv-dir) nil)))
        (if virtualenv-dir (progn
          (message (concat "Found " virtualenv-dir " as virtualenv for " filename))
          virtualenv-dir) nil)))) nil))
