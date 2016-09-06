@@ -185,19 +185,34 @@
                (local-file (file-relative-name
                             temp-file
                             (file-name-directory buffer-file-name)))
+               (pep8-options-list (split-string python-pep8-options))
+               (pylint-options-list (split-string python-pylint-options))
+               (python-exe (concat python-shell-virtualenv-path bin-python))
+               ;; create temp pylint file to run in virtualenv - I can't figure out how to
+               ;; escape this under cmd /c python -c
+               (pylint-script (make-temp-file "pylint"))
+               (_ (with-temp-file pylint-script
+                    (insert "from pylint import run_pylint;\
+                             import sys;\
+                             sys.exit(run_pylint())")))
+               (pylint-installed-in-virtualenv
+                (zerop (call-process python-exe nil nil nil pylint-script "-h")))
+               ;; use system python if pylint isn't in the virtualenv
+               (pylint-exe (if pylint-installed-in-virtualenv python-exe "python")) 
+               (_ (if (and use-pylint (not pylint-installed-in-virtualenv))
+                      (message (format "Warning:  pylint not installed in virtualenv %s; package imports won't be detected"
+                                       python-shell-virtualenv-path))))
+               ;; Finally, build a command that runs any combination of pyflakes, pep8 and
+               ;; pylint.  First argument is the shell to run: bash or cmd.  Second
+               ;; argument is a list of arguments to the shell.  For bash it _must_ have
+               ;; exactly two elements: "-c" and a single string with the subcommand to
+               ;; run.  Don't surround it in single quotes.  The resulting process is
+               ;; equivalent to doing the following on the command line:
+               ;;
+               ;; bash -c ' ( pyflakes common_flymake.py ; pep8 common_flymake.py ) '
                (shell (if (eq system-type 'windows-nt) "cmd" "bash"))
                (cmd-switch (if (eq system-type 'windows-nt) "/c" "-c"))
                (cmd-sep (if (eq system-type 'windows-nt) "&" ";"))
-               (pep8-options-list (split-string python-pep8-options))
-               (pylint-options-list (split-string python-pylint-options))
-               ;; Build a command that runs any combination of pyflakes, pep8 and pylint.
-               ;; First argument is the shell to run: bash or cmd.  Second argument is a
-               ;; list of arguments to the shell.  For bash it _must_ have exactly two
-               ;; elements: "-c" and a single string with the subcommand to run.  Don't
-               ;; surround it in single quotes.  The resulting process is equivalent to
-               ;; doing the following on the command line:
-               ;;
-               ;; bash -c ' ( pyflakes common_flymake.py ; pep8 common_flymake.py ) '
                (rv (list shell
                  `(,cmd-switch
                    ;; use mapconcat to build a string with spaces in between arguments
@@ -214,15 +229,7 @@
                      ,@(if (and use-pylint (or use-pyflakes use-pep8)) `(,cmd-sep))
                      ;; pylint command - virtualenv friendly
                      ,@(if use-pylint `(;; equivalent to 'python $(where pylint)' inside virtualenv
-                                        ;; ,(concat python-shell-virtualenv-path bin-python)
-                                        ;; "python" "-c\"import sys\""
-                                        ;; ,(shell-quote-argument
-                                        ;;  "from pylint import run_pylint; import sys; sys.exit(run_pylint())")
-                                        ;; "pylint"
-                                        ;; ,(concat (file-name-directory (executable-find "pylint")) "pylint") ;; doesn't work in windows, raw pylint script isn't installed
-
-                                        ;; "-c \"from pylint import run_pylint; import sys; sys.exit(run_pylint())\""
-                                        "pylint"
+                                        ,pylint-exe ,pylint-script
                                         ,@pylint-options-list ,local-file))
                      ;; properly wrap the combined command
                      ,@(if (not (eq system-type 'windows-nt)) '(" ; )"))
