@@ -31,7 +31,7 @@
   "Use pylint with flymake"
   :type 'boolean)
 
-(defcustom python-pylint-options "--output-format=parseable --reports=n\
+(defcustom python-pylint-options  "--output-format=parseable --reports=n\
                                   --extension-pkg-whitelist=numpy\
                                   --disable=R0913,C0103,C0302,C0111,W0511"
   "pylint command line options"
@@ -190,12 +190,12 @@
                (cmd-sep (if (eq system-type 'windows-nt) "&" ";"))
                (pep8-options-list (split-string python-pep8-options))
                (pylint-options-list (split-string python-pylint-options))
-               ;; Build a command that runs pyflakes or pep8 or both.  First argument is
-               ;; the shell to run: bash or cmd.  Second argument is a list of arguments
-               ;; to the shell.  For bash it _must_ have exactly two elements: "-c" and a
-               ;; single string with the subcommand to run.  Don't surround it in single
-               ;; quotes.  The resulting process is equivalent to doing the following on
-               ;; the command line:
+               ;; Build a command that runs any combination of pyflakes, pep8 and pylint.
+               ;; First argument is the shell to run: bash or cmd.  Second argument is a
+               ;; list of arguments to the shell.  For bash it _must_ have exactly two
+               ;; elements: "-c" and a single string with the subcommand to run.  Don't
+               ;; surround it in single quotes.  The resulting process is equivalent to
+               ;; doing the following on the command line:
                ;;
                ;; bash -c ' ( pyflakes common_flymake.py ; pep8 common_flymake.py ) '
                (rv (list shell
@@ -215,10 +215,14 @@
                      ;; pylint command - virtualenv friendly
                      ,@(if use-pylint `(;; equivalent to 'python $(where pylint)' inside virtualenv
                                         ;; ,(concat python-shell-virtualenv-path bin-python)
-                                        "python"
-                                        ;; ,(concat (file-name-directory (executable-find "pylint")) "pylint") ;; doesn't work in windows, raw pylint script isn't installed
-                                        "-c 'from pylint import run_pylint; import sys; sys.exit(run_pylint())'"
+                                        ;; "python" "-c\"import sys\""
+                                        ;; ,(shell-quote-argument
+                                        ;;  "from pylint import run_pylint; import sys; sys.exit(run_pylint())")
                                         ;; "pylint"
+                                        ;; ,(concat (file-name-directory (executable-find "pylint")) "pylint") ;; doesn't work in windows, raw pylint script isn't installed
+
+                                        ;; "-c \"from pylint import run_pylint; import sys; sys.exit(run_pylint())\""
+                                        "pylint"
                                         ,@pylint-options-list ,local-file))
                      ;; properly wrap the combined command
                      ,@(if (not (eq system-type 'windows-nt)) '(" ; )"))
