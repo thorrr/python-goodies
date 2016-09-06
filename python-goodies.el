@@ -164,6 +164,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;
 (add-hook 'python-mode-hook (lambda ()
   (require 'flymake)
+  ;; create pylint file to run in virtualenv - I can't figure out how to escape this under
+  ;; cmd /c python -c
+  (if (not (boundp 'python-goodies-pylint-script)) (progn
+    (setq python-goodies-pylint-script (make-temp-file "pylint"))
+    (with-temp-file python-goodies-pylint-script
+      (insert "from pylint import run_pylint;\
+               import sys;\
+               sys.exit(run_pylint())"))))
   (add-to-list 'flymake-allowed-file-name-masks '("\\.py\\'" flymake-pyflakes-init))))
 
 (defun flymake-pyflakes-init ()
@@ -188,15 +196,8 @@
                (pep8-options-list (split-string python-pep8-options))
                (pylint-options-list (split-string python-pylint-options))
                (python-exe (concat python-shell-virtualenv-path bin-python))
-               ;; create temp pylint file to run in virtualenv - I can't figure out how to
-               ;; escape this under cmd /c python -c
-               (pylint-script (make-temp-file "pylint"))
-               (_ (with-temp-file pylint-script
-                    (insert "from pylint import run_pylint;\
-                             import sys;\
-                             sys.exit(run_pylint())")))
                (pylint-installed-in-virtualenv
-                (zerop (call-process python-exe nil nil nil pylint-script "-h")))
+                (zerop (call-process python-exe nil nil nil python-goodies-pylint-script "-h")))
                ;; use system python if pylint isn't in the virtualenv
                (pylint-exe (if pylint-installed-in-virtualenv python-exe "python")) 
                (_ (if (and use-pylint (not pylint-installed-in-virtualenv))
@@ -229,7 +230,7 @@
                      ,@(if (and use-pylint (or use-pyflakes use-pep8)) `(,cmd-sep))
                      ;; pylint command - virtualenv friendly
                      ,@(if use-pylint `(;; equivalent to 'python $(where pylint)' inside virtualenv
-                                        ,pylint-exe ,pylint-script
+                                        ,pylint-exe ,python-goodies-pylint-script
                                         ,@pylint-options-list ,local-file))
                      ;; properly wrap the combined command
                      ,@(if (not (eq system-type 'windows-nt)) '(" ; )"))
