@@ -255,10 +255,6 @@
   (set-variable 'indent-tabs-mode nil)
   (python-shell-setup python-inferior-shell-type)
 
-  ;; before running virtualenv hook fill python-shell-virtualenv-path
-  ;; with the default system value
-  (setq python-shell-virtualenv-path (executable-find bin-python))
-  
   ;; An Internal Process is created for each unique configuration.
   ;; Set up each file's virtualenv before calling python-just-source-file so that each virtualenv
   ;; will have a single internal process
@@ -282,7 +278,6 @@
 ;; make sure our inferior buffers are properly virtualenv aware too
 (add-hook 'inferior-python-mode-hook (lambda ()
   (python-shell-setup python-inferior-shell-type)
-  (setq python-shell-virtualenv-path (executable-find bin-python))
   (virtualenv-hook)))
 
 
@@ -478,6 +473,10 @@ be sourced without relative import errors "
   (concat bin-python-dir (if (eq system-type 'windows-nt)  "python.exe" "python"))
   "path to the python executable based on emacs architecture")
 
+;; set to system python so we can robustly refer to python-shell-virtualenv-path everywhere
+(setq python-shell-virtualenv-path
+      (file-name-directory (file-name-directory (executable-find "python")))) ;; `which python`../../
+  
 (defun set-virtualenv (dir)
   (interactive "D")
   (setq python-shell-virtualenv-path (expand-file-name dir))
@@ -537,12 +536,14 @@ function that takes a single argument "
 (defun virtualenv-hook ()
   "This should be run before any comints are run.  And re-run
 when opening a new file."
-  (set (make-local-variable 'python-shell-virtualenv-path) nil)
-  (set  (make-local-variable 'virtualenv-activate-command) "")
+  ;; inherit python-shell-virtualenv-path from global default
+  (set (make-local-variable 'python-shell-virtualenv-path) python-shell-virtualenv-path)
   (set (make-local-variable 'virtualenv-activate-command) "")
   (add-to-list 'python-shell-setup-codes 'virtualenv-activate-command)
   (if auto-detect-virtualenv
-      (setq python-shell-virtualenv-path (detect-virtualenv (buffer-file-name))))
+      (let ((detected-virtualenv (detect-virtualenv (buffer-file-name))))
+        (if detected-virtualenv
+            (setq python-shell-virtualenv-path detected-virtualenv))))
   
   ;; the following doesn't work because pymacs has already been called at this point
   ;; (make-local-variable 'pymacs-python-command)
