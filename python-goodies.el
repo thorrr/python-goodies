@@ -471,7 +471,7 @@ be sourced without relative import errors "
   "When loading a python file attempt to find its virtualenv using function detect-virtualenv.")
 
 (defconst bin-python-dir
-  (if (eq system-type 'windows-nt) "/Scripts/" "/bin/")
+  (if (eq system-type 'windows-nt) "Scripts/" "bin/")
   "root directory of the python executable based on emacs architecture")
 
 (defconst bin-python
@@ -498,8 +498,9 @@ be sourced without relative import errors "
                   dir nil))
                  subdirs)))
             (virtualenv-dir (car subdirs-that-have-bin/python))
-            ;; sometimes we're left with a relative path i.e. scripts/lib/..
-            (virtualenv-dir (if virtualenv-dir (expand-file-name virtualenv-dir) nil)))
+            (virtualenv-dir (if virtualenv-dir
+              ;; sometimes we're left with a relative path i.e. scripts/lib/..
+              (file-name-as-directory (expand-file-name virtualenv-dir)) nil)))
        (if virtualenv-dir (progn
          (message (concat "Found " virtualenv-dir " as virtualenv for " filename))
          virtualenv-dir) nil)))) nil))
