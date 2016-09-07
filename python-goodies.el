@@ -524,7 +524,6 @@ function that takes a single argument "
   (defun parent-directory (dir)
     (unless (string-match "^\\([a-z]:\\)*/$" dir)
       (file-name-directory (directory-file-name dir))))
-  
   (let* ((f (if (functionp fn-or-subdir)
               fn-or-subdir  
               (lambda (cd) (file-exists-p (concat cd fn-or-subdir)))))
