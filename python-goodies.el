@@ -578,22 +578,23 @@ when opening a new file."
   (let* ((activate-script-name (concat virtualenv-dir bin-python-dir "activate_this.py"))
          (execfile-line (concat "    execfile(\"" activate-script-name
                                 "\", dict(__file__=\"" activate-script-name "\"))")))
-    (with-temp-buffer
+    (if virtualenv-dir (with-temp-buffer
       (insert-file-contents rope-config-filename)
       (goto-char (point-min))
       (if (re-search-forward execfile-line nil 't 1)
           'exists (progn
-          (let ((is-rope-config-file (re-search-forward "^def set_prefs(prefs):" nil 't)))
-            (if (not is-rope-config-file)
-                (error (concat "file " rope-config-filename " isn't a rope project file"))))
-          (next-line)
-          (next-line)
-          (move-beginning-of-line nil)
-          (delete-region (point) (save-excursion (end-of-line) (point)))
-          (insert execfile-line)
-          (write-file rope-config-filename)
-           'modified
-          )))))
+                    (let ((is-rope-config-file (re-search-forward "^def set_prefs(prefs):" nil 't)))
+                      (if (not is-rope-config-file)
+                          (error (concat "file " rope-config-filename " isn't a rope project file"))))
+                    (next-line)
+                    (next-line)
+                    (move-beginning-of-line nil)
+                    (delete-region (point) (save-excursion (end-of-line) (point)))
+                    (insert execfile-line)
+                    (write-file rope-config-filename)
+                    'modified
+                    )))
+      (message "Warning: virtualenv not set, not changing rope config"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Commands
