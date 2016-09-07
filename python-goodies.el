@@ -489,7 +489,7 @@ be sourced without relative import errors "
             (ls (mapcar (lambda (f) (concat cd f)) (directory-files cd)))
             (subdirs (delq nil (mapcar subdir-p ls)))
             (subdirs-that-have-bin/python (delq nil (mapcar (lambda (dir)
-              (if (file-regular-p (concat dir bin-python))
+              (if (file-regular-p (concat (file-name-as-directory dir) bin-python))
                   dir nil))
                  subdirs)))
             (virtualenv-dir (car subdirs-that-have-bin/python))
