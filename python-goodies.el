@@ -195,14 +195,23 @@
                             (file-name-directory buffer-file-name)))
                (pep8-options-list (split-string python-pep8-options))
                (pylint-options-list (split-string python-pylint-options))
-               (python-exe (concat python-shell-virtualenv-path bin-python))
-               (pylint-installed-in-virtualenv
-                (zerop (call-process python-exe nil nil nil python-goodies-pylint-script "-h")))
+
+               (virtualenv-python (concat python-shell-virtualenv-path bin-python))
+               ;; python-shell-virtualenv-path will be non-nil if we're in a virtualenv
+               (pylint-installed-in-virtualenv (if python-shell-virtualenv-path
+                 (zerop (call-process virtualenv-python nil nil nil python-goodies-pylint-script "-h"))
+                 'no-virtualenv))
                ;; use system python if pylint isn't in the virtualenv
-               (pylint-exe (if pylint-installed-in-virtualenv python-exe "python")) 
-               (_ (if (and use-pylint (not pylint-installed-in-virtualenv))
-                      (message (format "Warning:  pylint not installed in virtualenv %s; package imports won't be detected"
-                                       python-shell-virtualenv-path))))
+               (pylint-exe (if (eq pylint-installed-in-virtualenv 't)
+                               virtualenv-python
+                             "python"))
+               ;; finally, warn user if pylint isn't in the virtualenv
+               (_ (if (and
+                       use-pylint python-shell-virtualenv-path (not pylint-installed-in-virtualenv))
+                      (message (format
+                        "Warning:  pylint not installed in virtualenv %s; package imports won't be detected"
+                        python-shell-virtualenv-path))))
+
                ;; Finally, build a command that runs any combination of pyflakes, pep8 and
                ;; pylint.  First argument is the shell to run: bash or cmd.  Second
                ;; argument is a list of arguments to the shell.  For bash it _must_ have
