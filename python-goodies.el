@@ -473,10 +473,6 @@ be sourced without relative import errors "
   (concat bin-python-dir (if (eq system-type 'windows-nt)  "python.exe" "python"))
   "path to the python executable based on emacs architecture")
 
-;; set to system python so we can robustly refer to python-shell-virtualenv-path everywhere
-(setq python-shell-virtualenv-path
-      (file-name-directory (file-name-directory (executable-find "python")))) ;; `which python`../../
-  
 (defun set-virtualenv (dir)
   (interactive "D")
   (setq python-shell-virtualenv-path (expand-file-name dir))
