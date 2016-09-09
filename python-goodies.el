@@ -379,12 +379,12 @@ scope or MyClass = namedtuple(...) are allowed."
                  (delete-region side-effect-start (point))
                  (setq side-effect-start nil))))
         ;;now move cursor past any triple quotes that start on this line
-        (if (looking-at ".*\"\"\"") (progn
-              (re-search-forward ".*\"\"\"" nil)
-              (re-search-forward ".*\"\"\"" nil 'eof)))
-        (if (looking-at ".*'''") (progn
-              (re-search-forward ".*'''" nil)
-              (re-search-forward ".*'''" nil 'eof)))
+        (if (looking-at ".*?\"\"\"") (progn
+              (re-search-forward ".*?\"\"\"" nil)
+              (re-search-forward ".*?\"\"\"" nil 'eof)))
+        (if (looking-at ".*?'''") (progn
+              (re-search-forward ".*?'''" nil)
+              (re-search-forward ".*?'''" nil 'eof)))
         ;;then bump to next line
         (setq more-lines (= 0 (forward-line 1))))
       ;;finally, delete the last region if we saw something before EOF
