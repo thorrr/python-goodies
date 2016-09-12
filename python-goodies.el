@@ -234,13 +234,14 @@
                      ,@(if (and use-pep8 use-pyflakes) `(,cmd-sep))
                      ;; pep8 command
                      ,@(if use-pep8 `("pep8" ,@pep8-options-list
-                                      ,(concat "--max-line-length=" (format "%d" (+ 1 python-column-width))) ,local-file))
+                                      ,(concat "--max-line-length=" (format "%d" python-column-width)) ,local-file))
                      ;; separate again - check for any previous command
                      ,@(if (and use-pylint (or use-pyflakes use-pep8)) `(,cmd-sep))
                      ;; pylint command - virtualenv friendly
                      ,@(if use-pylint `(;; equivalent to 'python $(where pylint)' inside virtualenv
                                         ,pylint-exe ,python-goodies-pylint-script
-                                        ,@pylint-options-list ,local-file))
+                                          ,(concat " --max-line-length=" (format "%d" (+ 1 python-column-width)))            
+                                          ,@pylint-options-list ,local-file))
                      ;; properly wrap the combined command
                      ,@(if (not (eq system-type 'windows-nt)) '(" ; )"))
                      ) " ")))))
