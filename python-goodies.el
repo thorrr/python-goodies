@@ -81,7 +81,9 @@
 
 
 (defun python-shell-setup (shell-type)
-  (cond ((eq shell-type 'ipython)
+  (if (not (or (eq shell-type 'python) (eq shell-type 'ipython)))
+      (error "python-shell-setup must be called with 'python or 'ipython"))
+  (if (and (eq shell-type 'ipython) (executable-find "ipython")) (progn
     (message "Changing python-shell-inferior variables to support ipython")
     (setq
      python-shell-interpreter "ipython"
@@ -91,20 +93,22 @@
      python-shell-completion-setup-code "from IPython.core.completerlib import module_completion"
      python-shell-completion-module-string-code "';'.join(module_completion('''%s'''))\n"
      python-shell-completion-string-code "';'.join(get_ipython().Completer.all_completions('''%s'''))\n" 
-     ) 't)
-        ((eq shell-type 'python)
-     (message "Changing python-shell-inferior variables to support python")
-     (setq
-      python-shell-interpreter (eval (car (get 'python-shell-interpreter 'standard-value)))
-      python-shell-interpreter-args (eval (car (get 'python-shell-interpreter-args 'standard-value)))
-      python-shell-prompt-regexp (eval (car (get 'python-shell-prompt-regexp 'standard-value)))
-      ;;sometimes prompts "build up" in the inferior processes so filter them out
-      python-shell-prompt-output-regexp "\\(>>> \\)*" ;;(eval (car (get 'python-shell-prompt-output-regexp 'standard-value)))
-      python-shell-completion-setup-code (eval (car (get 'python-shell-completion-setup-code 'standard-value)))
-      python-shell-completion-module-string-code (eval (car (get 'python-shell-completion-module-string-code 'standard-value)))
-      python-shell-completion-string-code  (eval (car (get 'python-shell-completion-string-code 'standard-value)))
-      ) 't)
-        ('t (error "python-shell-setup must be called with 'python or 'ipython"))))
+     ))
+    ;; else set regular python mode with some helpful messages if the user wants ipython mode
+    (if (and (eq shell-type 'ipython) (not (executable-find "ipython")))
+        (message "Warning - ipython not installed in python base installation.  Changing shell-type back to 'python")
+      (message "Changing python-shell-inferior variables to support python"))
+    (setq
+     python-shell-interpreter (eval (car (get 'python-shell-interpreter 'standard-value)))
+     python-shell-interpreter-args (eval (car (get 'python-shell-interpreter-args 'standard-value)))
+     python-shell-prompt-regexp (eval (car (get 'python-shell-prompt-regexp 'standard-value)))
+     ;;sometimes prompts "build up" in the inferior processes so filter them out
+     python-shell-prompt-output-regexp "\\(>>> \\)*" ;;(eval (car (get 'python-shell-prompt-output-regexp 'standard-value)))
+     python-shell-completion-setup-code (eval (car (get 'python-shell-completion-setup-code 'standard-value)))
+     python-shell-completion-module-string-code (eval (car (get 'python-shell-completion-module-string-code 'standard-value)))
+     python-shell-completion-string-code  (eval (car (get 'python-shell-completion-string-code 'standard-value)))
+     )))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Global Setup
