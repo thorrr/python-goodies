@@ -159,7 +159,11 @@
   (setq ac-sources (delete 'ac-source-abbrev ac-sources))
   (setq ac-sources (delete 'ac-source-dictionary ac-sources))
   (setq ac-sources (delete 'ac-source-words-in-same-mode-buffers ac-sources))
-  (require 'yasnippet)
+  (if (not (boundp '_python-goodies-yasnippet-started)) (progn
+    (setq _python-goodies-yasnippet-started nil)
+    (require 'yasnippet)
+    (yas-reload-all)))
+  (yas-minor-mode)
   (add-to-list 'ac-sources 'ac-source-yasnippet)
 ))
 
