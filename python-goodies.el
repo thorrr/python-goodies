@@ -92,7 +92,11 @@
      python-shell-prompt-output-regexp "Out\\[[0-9]+\\]: "
      python-shell-completion-setup-code "from IPython.core.completerlib import module_completion"
      python-shell-completion-module-string-code "';'.join(module_completion('''%s'''))\n"
-     python-shell-completion-string-code "';'.join(get_ipython().Completer.all_completions('''%s'''))\n" 
+     ;; unicode literal gets printed now so wrap the completion in a "print":  from
+     ;; https://lists.gnu.org/archive/html/bug-gnu-emacs/2016-07/msg01451.html
+     python-shell-completion-string-code (concat "print("
+         "';'.join(get_ipython().Completer.all_completions('''%s'''))\n"
+         ")\n")
      ))
     ;; else set regular python mode with some helpful messages if the user wants ipython mode
     (if (and (eq shell-type 'ipython) (not (executable-find "ipython")))
@@ -106,7 +110,12 @@
      python-shell-prompt-output-regexp "\\(>>> \\)*" ;;(eval (car (get 'python-shell-prompt-output-regexp 'standard-value)))
      python-shell-completion-setup-code (eval (car (get 'python-shell-completion-setup-code 'standard-value)))
      python-shell-completion-module-string-code (eval (car (get 'python-shell-completion-module-string-code 'standard-value)))
-     python-shell-completion-string-code  (eval (car (get 'python-shell-completion-string-code 'standard-value)))
+     python-shell-completion-string-code
+     ;; unicode literal gets printed now so wrap the completion in a "print":  from
+     ;; https://lists.gnu.org/archive/html/bug-gnu-emacs/2016-07/msg01451.html
+         (concat "print("
+                 (eval (car (get 'python-shell-completion-string-code 'standard-value)))
+                 ")\n")
      )))
 
 
