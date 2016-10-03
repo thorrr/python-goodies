@@ -220,7 +220,7 @@
                
                (virtualenv-python (concat python-shell-virtualenv-path bin-python))
                ;; bind local var pylint-in-venv so we don't do call-process again and again
-               (pylint-installed-in-virtualenv (or (and (boundp '_python-goodies/pylint-in-venv) _python-goodies/pylint-in-venv)
+               (pylint-installed-in-virtualenv (or (bound-and-true-p _python-goodies/pylint-in-venv)
                    ;; python-shell-virtualenv-path will be non-nil if we're in a virtualenv
                      (if python-shell-virtualenv-path
                          ;; return our local variable if we've already checked
