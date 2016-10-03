@@ -171,20 +171,25 @@
 ;; Flymake
 ;;;;;;;;;;;;;;;;;;;;;;;;
 (require 'flymake)
+;; run these once globally since they're slow
+(let* ((exe (if (eq system-type 'windows-nt) ".exe" "")))
+  (setq python-goodies/pyflakes-exists (if (executable-find (concat "pyflakes" exe)) 't nil))
+  (setq python-goodies/pep8-exists (if (executable-find (concat "pep8" exe)) 't nil))
+  (setq python-goodies/pylint-exists (if (executable-find (concat "pylint" exe)) 't nil))
+  (if (and python-use-pyflakes (not python-goodies/pyflakes-exists))
+      (message "Warning:  pyflakes executable not found"))
+  (if (and python-use-pep8 (not python-goodies/pep8-exists))
+      (message "Warning:  pep8 executable not found"))
+  (if (and python-use-pylint (not python-goodies/pylint-exists))
+      (message "Warning:  pylint executable not found"))
+
+)
+
 (defun flymake-python-build-cmd-line ()
-  (let* ((exe (if (eq system-type 'windows-nt) ".exe" ""))
-         (pyflakes-exists (if (executable-find (concat "pyflakes" exe)) 't nil))
-         (pep8-exists (if (executable-find (concat "pep8" exe)) 't nil))
-         (pylint-exists (if (executable-find (concat "pylint" exe)) 't nil))
-         (use-pyflakes (and python-use-pyflakes pyflakes-exists))
-         (use-pep8 (and python-use-pep8 pep8-exists))
-         (use-pylint (and python-use-pylint pylint-exists)))
-    (if (and python-use-pyflakes (not pyflakes-exists))
-        (message "Warning:  pyflakes executable not found"))
-    (if (and python-use-pep8 (not pep8-exists))
-        (message "Warning:  pep8 executable not found"))
-    (if (and python-use-pylint (not pylint-exists))
-        (message "Warning:  pylint executable not found"))
+  ;; relies on global variables: pyflakes-exists, pep8-exists, pylint-exists
+  (let ((use-pyflakes (and python-use-pyflakes python-goodies/pyflakes-exists))
+        (use-pep8 (and python-use-pep8 python-goodies/pep8-exists))
+        (use-pylint (and python-use-pylint python-goodies/pylint-exists)))
     (if (or use-pyflakes use-pep8 use-pylint)
         (let* ((temp-file (flymake-init-create-temp-buffer-copy
                            'flymake-create-temp-inplace))
@@ -193,23 +198,25 @@
                             (file-name-directory buffer-file-name)))
                (pep8-options-list (split-string python-pep8-options))
                (pylint-options-list (split-string python-pylint-options))
-
+               
                (virtualenv-python (concat python-shell-virtualenv-path bin-python))
-               ;; python-shell-virtualenv-path will be non-nil if we're in a virtualenv
-               (pylint-installed-in-virtualenv (if python-shell-virtualenv-path
-                 (zerop (call-process virtualenv-python nil nil nil python-goodies/pylint-script "-h"))
-                 'no-virtualenv))
+               ;; bind local var pylint-in-venv so we don't do call-process again and again
+               (pylint-installed-in-virtualenv (or (and (boundp '_python-goodies/pylint-in-venv) _python-goodies/pylint-in-venv)
+                   ;; python-shell-virtualenv-path will be non-nil if we're in a virtualenv
+                     (if python-shell-virtualenv-path
+                         ;; return our local variable if we've already checked
+                         (if (boundp '_python-goodies/pylint-in-venv) _python-goodies/pylint-in-venv
+                           (if (zerop (call-process virtualenv-python nil nil nil python-goodies/pylint-script "-h"))
+                               (setq-local _python-goodies/pylint-in-venv 't)
+                             (if use-pylint (message (format
+                                 "Warning:  pylint not installed in virtualenv %s; package imports won't be detected"
+                                 python-shell-virtualenv-path)))
+                             (setq-local _python-goodies/pylint-in-venv nil)
+                             'not-installed-in-virtualenv)))))
                ;; use system python if pylint isn't in the virtualenv
                (pylint-exe (if (eq pylint-installed-in-virtualenv 't)
                                virtualenv-python
                              "python"))
-               ;; finally, warn user if pylint isn't in the virtualenv
-               (_ (if (and
-                       use-pylint python-shell-virtualenv-path (not pylint-installed-in-virtualenv))
-                      (message (format
-                        "Warning:  pylint not installed in virtualenv %s; package imports won't be detected"
-                        python-shell-virtualenv-path))))
-
                ;; Finally, build a command that runs any combination of pyflakes, pep8 and
                ;; pylint.  First argument is the shell to run: bash or cmd.  Second
                ;; argument is a list of arguments to the shell.  For bash it _must_ have
@@ -238,14 +245,14 @@
                      ;; pylint command - virtualenv friendly
                      ,@(if use-pylint `(;; equivalent to 'python $(where pylint)' inside virtualenv
                                         ,pylint-exe ,python-goodies/pylint-script
-                                          ,(concat " --max-line-length=" (format "%d" (+ 1 python-column-width)))            
-                                          ,@pylint-options-list ,local-file))
+                                                    ,(concat " --max-line-length=" (format "%d" (+ 1 python-column-width)))
+                                                    ,@pylint-options-list ,local-file))
                      ;; properly wrap the combined command
                      ,@(if (not (eq system-type 'windows-nt)) '(" ; )"))
                      ) " ")))))
           rv)
       (progn (message
-         "Warning:  flymake won't run because neither pyflakes nor pep8 nor pylint were selected") nil))))
+              "Warning:  flymake won't run because neither pyflakes nor pep8 nor pylint were selected") nil))))
 
 ;; create pylint file to run inside virtualenv - I can't figure out how to escape this
 ;; under 'cmd /c python -c'
@@ -256,12 +263,7 @@
                sys.exit(run_pylint())"))
 
 (add-hook 'python-mode-hook (lambda ()
-  ;; only calculate the flymake cmd line once a single time:  when the file is opened
-  (setq-local _python-goodies/flymake-python-cmd-line (flymake-python-build-cmd-line))
-
-  ;; drive flymake with cached flymake-python command line value
-  (add-to-list 'flymake-allowed-file-name-masks
-               '("\\.py\\'" (lambda () _python-goodies/flymake-python-cmd-line)))))
+  (add-to-list 'flymake-allowed-file-name-masks '("\\.py\\'" flymake-python-build-cmd-line))))
 
 (add-hook 'python-mode-hook (lambda ()
   ;;modify pyflakes' output
