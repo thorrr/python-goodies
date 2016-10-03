@@ -194,6 +194,15 @@
 
 )
 
+(defun python-goodies/filter-star-builtins (filename)
+  "eliminate `from builtins import *` from python file so flymake
+   isn't triggered by it"
+  (with-temp-file filename
+    (insert-file-contents filename)
+    (while (re-search-forward "^from +builtins +import +\\*" nil 't)
+      (replace-match "" nil nil)))
+  filename)
+
 (defun flymake-python-build-cmd-line ()
   ;; relies on global variables: pyflakes-exists, pep8-exists, pylint-exists
   (let ((use-pyflakes (and python-use-pyflakes python-goodies/pyflakes-exists))
@@ -202,6 +211,7 @@
     (if (or use-pyflakes use-pep8 use-pylint)
         (let* ((temp-file (flymake-init-create-temp-buffer-copy
                            'flymake-create-temp-inplace))
+               (temp-file (python-goodies/filter-star-builtins temp-file))
                (local-file (file-relative-name
                             temp-file
                             (file-name-directory buffer-file-name)))
