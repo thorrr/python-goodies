@@ -172,9 +172,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;
 (require 'flymake)
 (defun flymake-python-build-cmd-line ()
-  (let* ((pyflakes-exists (if (executable-find "pyflakes") 't nil))
-         (pep8-exists (if (executable-find "pep8") 't nil))
-         (pylint-exists (if (executable-find "pylint") 't nil))
+  (let* ((exe (if (eq system-type 'windows-nt) ".exe" ""))
+         (pyflakes-exists (if (executable-find (concat "pyflakes" exe)) 't nil))
+         (pep8-exists (if (executable-find (concat "pep8" exe)) 't nil))
+         (pylint-exists (if (executable-find (concat "pylint" exe)) 't nil))
          (use-pyflakes (and python-use-pyflakes pyflakes-exists))
          (use-pep8 (and python-use-pep8 pep8-exists))
          (use-pylint (and python-use-pylint pylint-exists)))
