@@ -723,8 +723,8 @@ when opening a new file."
 ))
 
 ;; I never want run-python to ask me for a path
-(defun run-python (&optional a b) (interactive "ii")
-  (python-shell-make-comint (python-shell-parse-command) (python-shell-get-process-name nil) t))
+;;( defun run-python (&optional a b) (interactive "ii")
+ ;;  (python-shell-make-comint (python-shell-parse-command) (python-shell-get-process-name nil) t))
 
 (defun python-goodies-eval-line ()
   "Evaluate the current Python line in the inferior Python process."
