@@ -571,9 +571,10 @@ function that takes a single argument "
 (defun virtualenv-hook ()
   "This should be run before any comints are run.  And re-run
 when opening a new file."
-  ;; inherit python-shell-virtualenv-path from global default
-  (set (make-local-variable 'python-shell-virtualenv-path) python-shell-virtualenv-path)
-  (set (make-local-variable 'virtualenv-activate-command) "")
+  (make-local-variable 'python-shell-virtualenv-path)
+
+  ;; can't make buffer-local since the comint hooks don't run under our buffer's scope
+  (setq virtualenv-activate-command "")
   (add-to-list 'python-shell-setup-codes 'virtualenv-activate-command)
   (if auto-detect-virtualenv
       (let ((detected-virtualenv (detect-virtualenv (buffer-file-name))))
