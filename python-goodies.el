@@ -677,8 +677,7 @@ when opening a new file."
 (defun python-goodies-rope-go-backward () (interactive) (pop-current-location))
 (defun python-goodies-python-send-buffer ()
   (interactive)
-  ;;refresh the internal process
-  (python-just-source-file (buffer-file-name) (python-shell-internal-get-or-create-process))
+  (run-python)
   ;; add the top level package to sys.path
   (python-shell-send-string (python-add-package-directory-string (buffer-file-name)))
   ;; now source the entire file verbatim into the visible repl
