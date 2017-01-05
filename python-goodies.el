@@ -350,13 +350,8 @@
 (defun python-shell-send-setup-code-to-process (process)
   "Gallina's python-shell-send-setup-code doesn't allow a process
 argument"
-  ;; (flet ((get-buffer-process (lambda (name) process)))
-  (let* ((orig (symbol-function 'get-buffer-process))
-         (fn (lambda (_) process)))
-    (fset 'get-buffer-process fn)
-    ;;can't throw an error here since get-buffer-process has to be reset OR ELSE
-    (with-demoted-errors (python-shell-send-setup-code))
-    (fset 'get-buffer-process orig)
+  (cl-letf* (((symbol-function 'get-buffer-process) (lambda (_) process)))
+    (python-shell-send-setup-code)
     process))
 
 (defun check-for-readline (process)
@@ -638,7 +633,7 @@ when opening a new file."
 (defun pymacs-reload-rope () 
     "Reload rope"
     (interactive)
-    (flet ((yes-or-no-p (&optional arg) 't))
+    (cl-flet ((symbol-function 'yes-or-no-p) (lambda (&optional _) 't))
       (pymacs-terminate-services)
       (pymacs-load "ropemacs" "rope-")))
 
@@ -649,7 +644,7 @@ when opening a new file."
   (defun find-rope-config-file ()
     "grab the argument to find-file by redefining it in rope-project-config's context"
     (let ((filename nil))
-      (flet ((find-file (arg) (setq filename arg)))
+      (cl-flet ((symbol-function 'find-file) (lambda (arg) (setq filename arg)))
         (rope-project-config))
       (if (eq system-type 'cygwin)
           (concat "/cygdrive/" (substring filename 0 1) (substring filename 2))
