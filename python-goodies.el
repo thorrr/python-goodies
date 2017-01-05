@@ -16,7 +16,7 @@
   )
 
 (defcustom python-use-pyflakes nil
-  "Use pylint with flymake"
+  "Use pyflakes with flymake"
   :type 'boolean)
 
 (defcustom python-use-pep8 nil
