@@ -573,14 +573,16 @@ function that takes a single argument "
       (when parent
         (ldf-compat parent fn-or-subdir)))))
 
+  
+(defvar python-goodies/virtualenv-activate-command ""
+  "The current virtualenv activate command.  We can't make this
+  buffer-local since the comint hooks don't run under our
+  buffer's scope")
 (defun virtualenv-hook ()
   "This should be run before any comints are run.  And re-run
 when opening a new file."
   (make-local-variable 'python-shell-virtualenv-path)
-
-  ;; can't make buffer-local since the comint hooks don't run under our buffer's scope
-  (setq virtualenv-activate-command "")
-  (add-to-list 'python-shell-setup-codes 'virtualenv-activate-command)
+  (add-to-list 'python-shell-setup-codes 'python-goodies/virtualenv-activate-command)
   (if auto-detect-virtualenv
       (let ((detected-virtualenv (detect-virtualenv (buffer-file-name))))
         (if detected-virtualenv
@@ -593,7 +595,7 @@ when opening a new file."
   ;; If we've detected a virtualenv specialize setup codes to
   ;; activate it in all new shells.
   (if (file-exists-p (concat python-shell-virtualenv-path bin-python-dir "activate_this.py")) (progn
-     (setq virtualenv-activate-command
+     (setq python-goodies/virtualenv-activate-command
            (concat "af = \"" python-shell-virtualenv-path bin-python-dir
                    "activate_this.py\"; execfile(af, dict(__file__=af))\n"))
      ))
