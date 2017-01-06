@@ -313,7 +313,9 @@
     (python-source-file-to-internal-process (buffer-file-name))
     ;; send an newline to clear the internal buffer because ipython sometimes hangs with a
     ;; "WARNING: Attempting to work in a virtualenv" message
-    (run-at-time "3 sec" nil 'python-shell-send-string "\n" python-shell-internal-buffer)
+    (if (< emacs-major-version 25)
+        (run-at-time "3 sec" nil 'python-shell-send-string "\n" (python-shell-internal-get-or-create-process)
+                     "Warning: python-source-file-to-internal-process was called 3 seconds ago but there's no live process"))
     (if (check-for-virtualenv (python-get-named-else-internal-process))
         (message (concat "Virtualenv successfully activated in internal python process for " (buffer-file-name))))))
   (if (check-for-readline (python-get-named-else-internal-process)) 't
@@ -350,13 +352,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Misc functions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defun python-shell-send-setup-code-to-process (process)
-  "Gallina's python-shell-send-setup-code doesn't allow a process
-argument"
-  (cl-letf* (((symbol-function 'get-buffer-process) (lambda (_) process)))
-    (python-shell-send-setup-code)
-    process))
 
 (defun check-for-readline (process)
   "return 't if we can import readline.  if we can't autocomplete will be silently broken"
@@ -456,10 +451,16 @@ be sourced without relative import errors "
 
 (defun python-source-file-to-internal-process (filename)
   "send a file to the internal process with the proper directory setup code"
-  (let ((internal-process (python-shell-internal-get-or-create-process)))
-    ;; this resends setup codes if process exists, which is redundant but harmless
+  (let ((internal-process (python-shell-internal-get-or-create-process))
+        ;; nasty hack that's not needed on emacs 25 anymore
+        (python-shell-send-setup-code-to-process (lambda (process)
+          "Gallina's python-shell-send-setup-code doesn't allow a process argument"
+          (cl-letf* (((symbol-function 'get-buffer-process) (lambda (_) process)))
+            (python-shell-send-setup-code)
+            process))))
     (if (not internal-process) (message (format "Warning - internal process is nil for %s" filename))
-      (python-shell-send-setup-code-to-process internal-process)
+      (if (< emacs-major-version 25)
+          (funcall 'python-shell-send-setup-code-to-process internal-process))
       (python-shell-send-string (python-add-package-directory-string filename) internal-process)
       ;; now send the actual code inside filename
       (python-just-source-file filename internal-process))))
