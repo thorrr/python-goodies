@@ -470,7 +470,7 @@ be sourced without relative import errors "
 
 (defun python-switch-to-internal-process ()
   (interactive)
-  (switch-to-buffer python-shell-internal-buffer))
+  (switch-to-buffer (concat " *" (python-shell-internal-get-process-name) "*")))
 
 ;; add the 'Hide All defs' menu item if we're in hide-show mode
 (defun hide-all-defs ()
