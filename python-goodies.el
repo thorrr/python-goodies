@@ -119,7 +119,7 @@
          ;; https://lists.gnu.org/archive/html/bug-gnu-emacs/2016-07/msg01451.html
          (concat "print("
                  (eval (car (get 'python-shell-completion-string-code 'standard-value)))
-                 ")\n")
+                 ")\n"))
      )))
 
 
