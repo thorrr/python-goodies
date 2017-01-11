@@ -45,20 +45,20 @@
 ;; Python specific keybindings
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (add-hook 'python-mode-hook (lambda ()
-  (define-key python-mode-map (kbd "C-M-<return>") 'python-goodies-python-send-buffer)
-  (if pymacs-parent-dir (progn
-    (define-key python-mode-map (kbd "M-.") 'python-goodies-rope-goto-definition)
-    (define-key python-mode-map (kbd "M-,") 'python-goodies-rope-go-backward)))
-  (define-key python-mode-map (kbd "M-i") 'python-goodies-python-shell-smart-switch)
-  (define-key python-mode-map (kbd "C-c C-j") 'python-goodies-eval-line)
-  (define-key python-mode-map (kbd "S-<f4>") 'python-goodies-restart-python-repl)
+  (define-key python-mode-map (kbd "C-M-<return>") 'python-goodies/python-send-buffer)
+  (if pymacs-parent-dir (prognq
+    (define-key python-mode-map (kbd "M-.") 'python-goodies/rope-goto-definition)
+    (define-key python-mode-map (kbd "M-,") 'python-goodies/rope-go-backward)))
+  (define-key python-mode-map (kbd "M-i") 'python-goodies/python-shell-smart-switch)
+  (define-key python-mode-map (kbd "C-c C-j") 'python-goodies/eval-line)
+  (define-key python-mode-map (kbd "S-<f4>") 'python-goodies/restart-python-repl)
 ))
 
 (add-hook 'inferior-python-mode-hook (lambda ()
-  (define-key inferior-python-mode-map (kbd "M-i") 'python-goodies-python-shell-smart-switch)
+  (define-key inferior-python-mode-map (kbd "M-i") 'python-goodies/python-shell-smart-switch)
   (define-key inferior-python-mode-map [down] 'comint-next-matching-input-from-input)
   (define-key inferior-python-mode-map [up] 'comint-previous-matching-input-from-input)
-  (define-key inferior-python-mode-map [f4] 'python-goodies-restart-python-repl)
+  (define-key inferior-python-mode-map [f4] 'python-goodies/restart-python-repl)
 ))
 
 (add-hook 'ropemacs-mode-hook (lambda ()
@@ -145,10 +145,10 @@
 ;;;;;;;;;;;;;
 ;; can't use python-shell-extra-pythonpaths because these have to be set before we require 'pymacs
 (defun pymacs-setup ()
-  (if (not (boundp '_python-goodies-pymacs-initiated))
-      (setq _python-goodies-pymacs-initiated nil))
+  (if (not (boundp 'python-goodies/_pymacs-initiated))
+      (setq python-goodies/_pymacs-initiated nil))
   (if (and pymacs-parent-dir
-           (not _python-goodies-pymacs-initiated)) (progn
+           (not python-goodies/_pymacs-initiated)) (progn
     (setenv "PYTHONPATH" (concat
       (concat pymacs-parent-dir "Pymacs" path-separator)
       (concat pymacs-parent-dir "ropemacs" path-separator)
@@ -157,7 +157,7 @@
       (getenv "PYTHONPATH")))
     (require 'pymacs)
     (setq pymacs-auto-restart t)
-    (setq _python-goodies-pymacs-initiated 't) ;;only have to do this once per emacs session
+    (setq python-goodies/_pymacs-initiated 't) ;;only have to do this once per emacs session
     )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -172,8 +172,8 @@
   (setq ac-sources (delete 'ac-source-abbrev ac-sources))
   (setq ac-sources (delete 'ac-source-dictionary ac-sources))
   (setq ac-sources (delete 'ac-source-words-in-same-mode-buffers ac-sources))
-  (if (not (boundp '_python-goodies-yasnippet-started)) (progn
-    (setq _python-goodies-yasnippet-started nil)
+  (if (not (boundp 'python-goodies/_yasnippet-started)) (progn
+    (setq python-goodies/_yasnippet-started nil)
     (require 'yasnippet)
     (yas-reload-all)))
   (yas-minor-mode)
@@ -224,17 +224,17 @@
                
                (virtualenv-python (concat python-shell-virtualenv-path bin-python))
                ;; bind local var pylint-in-venv so we don't do call-process again and again
-               (pylint-installed-in-virtualenv (or (bound-and-true-p _python-goodies/pylint-in-venv)
+               (pylint-installed-in-virtualenv (or (bound-and-true-p python-goodies/_pylint-in-venv)
                    ;; python-shell-virtualenv-path will be non-nil if we're in a virtualenv
                      (if python-shell-virtualenv-path
                          ;; return our local variable if we've already checked
-                         (if (boundp '_python-goodies/pylint-in-venv) _python-goodies/pylint-in-venv
+                         (if (boundp 'python-goodies/_pylint-in-venv) python-goodies/_pylint-in-venv
                            (if (zerop (call-process virtualenv-python nil nil nil python-goodies/pylint-script "-h"))
-                               (setq-local _python-goodies/pylint-in-venv 't)
+                               (setq-local python-goodies/_pylint-in-venv 't)
                              (if use-pylint (message (format
                                  "Warning:  pylint not installed in virtualenv %s; package imports won't be detected"
                                  python-shell-virtualenv-path)))
-                             (setq-local _python-goodies/pylint-in-venv nil)
+                             (setq-local python-goodies/_pylint-in-venv nil)
                              'not-installed-in-virtualenv)))))
                ;; use system python if pylint isn't in the virtualenv
                (pylint-exe (if (eq pylint-installed-in-virtualenv 't)
@@ -322,7 +322,7 @@
     (message "Warning:  readline not detected on system.  autocomplete from process won't work.\npip install pyreadline to set it up"))
   (if pymacs-parent-dir (progn
     (pymacs-setup)
-    (python-goodies-turn-on-ropemacs))) ;;something repeatedly calls pymacs-load "ropemacs" so you have to switch it back on
+    (python-goodies/turn-on-ropemacs))) ;;something repeatedly calls pymacs-load "ropemacs" so you have to switch it back on
   ))
 
 ;; make sure our inferior buffers are properly virtualenv aware too
@@ -663,7 +663,7 @@ when opening a new file."
       (pymacs-reload-rope)))
     't))
 
-(defun python-goodies-turn-on-ropemacs ()
+(defun python-goodies/turn-on-ropemacs ()
   (interactive)
   (setq ropemacs-enable-shortcuts nil) ;;otherwise this overwrites M-/ and M-?
 
@@ -680,18 +680,18 @@ when opening a new file."
   ;; (add-to-list 'ac-sources 'ac-source-ropemacs)
 )
 
-(defun python-goodies-rope-goto-definition ()(interactive) (push-current-location) (rope-goto-definition)) 
-(defun python-goodies-rope-go-backward () (interactive) (pop-current-location))
-(defun python-goodies-python-send-buffer ()
+(defun python-goodies/rope-goto-definition ()(interactive) (push-current-location) (rope-goto-definition)) 
+(defun python-goodies/rope-go-backward () (interactive) (pop-current-location))
+(defun python-goodies/python-send-buffer ()
   (interactive)
   (run-python)
   ;; add the top level package to sys.path
   (python-shell-send-string (python-add-package-directory-string (buffer-file-name)))
   ;; now source the entire file verbatim into the visible repl
   (python-shell-send-buffer)
-  (python-goodies-python-shell-smart-switch))
+  (python-goodies/python-shell-smart-switch))
 
-(defun python-goodies-python-shell-smart-switch ()
+(defun python-goodies/python-shell-smart-switch ()
   (interactive)
   (let ((saved-point (point))
 	(saved-frame (selected-frame))
@@ -714,7 +714,7 @@ when opening a new file."
                  (setq my-python-most-recent-window saved-window)
                  )))))
 
-(defun python-goodies-restart-python-repl () (interactive)
+(defun python-goodies/restart-python-repl () (interactive)
   (let ((process (python-shell-get-or-create-process))
         (in-repl (eq major-mode 'inferior-python-mode)))
     (if in-repl (other-window 1))
@@ -728,7 +728,7 @@ when opening a new file."
 ;;( defun run-python (&optional a b) (interactive "ii")
  ;;  (python-shell-make-comint (python-shell-parse-command) (python-shell-get-process-name nil) t))
 
-(defun python-goodies-eval-line ()
+(defun python-goodies/eval-line ()
   "Evaluate the current Python line in the inferior Python process."
   (interactive) 
   (python-shell-send-string
