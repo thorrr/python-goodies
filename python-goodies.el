@@ -333,8 +333,7 @@
 
 (add-hook 'inferior-python-mode-hook (lambda ()
   ;; jump to the bottom of the comint buffer if you start typing
-  (make-local-variable 'comint-scroll-to-bottom-on-input) 
-  (setq comint-scroll-to-bottom-on-input t)))
+  (setq-local comint-scroll-to-bottom-on-input t)))
 
 ;; turn off "Active processes exist" warning for *Python* processes
 (add-hook 'comint-exec-hook 
