@@ -638,7 +638,7 @@ when opening a new file."
 (defun pymacs-reload-rope () 
     "Reload rope"
     (interactive)
-    (cl-flet ((symbol-function 'yes-or-no-p) (lambda (&optional _) 't))
+    (cl-letf (((symbol-function 'yes-or-no-p) (lambda (&optional _) 't)))
       (pymacs-terminate-services)
       (pymacs-load "ropemacs" "rope-")))
 
@@ -649,7 +649,8 @@ when opening a new file."
   (defun find-rope-config-file ()
     "grab the argument to find-file by redefining it in rope-project-config's context"
     (let ((filename nil))
-      (cl-flet ((symbol-function 'find-file) (lambda (arg) (setq filename arg)))
+      (cl-letf (((symbol-function 'find-file)
+                 (lambda (find-file-filename) (setq filename find-file-filename))))
         (rope-project-config))
       (if (eq system-type 'cygwin)
           (concat "/cygdrive/" (substring filename 0 1) (substring filename 2))
