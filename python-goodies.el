@@ -646,19 +646,20 @@ when opening a new file."
   "add virtualenv setup to rope project"
   (interactive)
   (virtualenv-hook)
-  (defun find-rope-config-file ()
-    "grab the argument to find-file by redefining it in rope-project-config's context"
-    (let ((filename nil))
-      (cl-letf (((symbol-function 'find-file)
-                 (lambda (find-file-filename) (setq filename find-file-filename))))
-        (rope-project-config))
-      (if (eq system-type 'cygwin)
-          (concat "/cygdrive/" (substring filename 0 1) (substring filename 2))
-        filename)))
-  (let ((set? (set-virtualenv-in-rope-config (find-rope-config-file) python-shell-virtualenv-path)))
+  (let* ((find-rope-config-file (lambda ()
+     ;; "grab the argument to find-file by redefining it in rope-project-config's context"
+           (let ((filename nil))
+	     (cl-letf (((symbol-function 'find-file)
+			(lambda (find-file-filename) (setq filename find-file-filename))))
+	       (rope-project-config))
+	     (if (eq system-type 'cygwin)
+		 (concat "/cygdrive/" (substring filename 0 1) (substring filename 2))
+	       filename))))
+         (set? (set-virtualenv-in-rope-config (funcall find-rope-config-file) python-shell-virtualenv-path)))
     (if (eq set? 'modified) (progn
-      (print (concat "virtualenv " python-shell-virtualenv-path " reset in rope project config, restarting pymacs."))
-      (pymacs-reload-rope)))
+        (print (concat "virtualenv " python-shell-virtualenv-path 
+		       " reset in rope project config, restarting pymacs."))
+	(pymacs-reload-rope)))
     't))
 
 (defun python-goodies/turn-on-ropemacs ()
