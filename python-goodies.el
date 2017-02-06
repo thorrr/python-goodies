@@ -46,7 +46,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (add-hook 'python-mode-hook (lambda ()
   (define-key python-mode-map (kbd "C-M-<return>") 'python-goodies/python-send-buffer)
-  (if pymacs-parent-dir (prognq
+  (if pymacs-parent-dir (progn
     (define-key python-mode-map (kbd "M-.") 'python-goodies/rope-goto-definition)
     (define-key python-mode-map (kbd "M-,") 'python-goodies/rope-go-backward)))
   (define-key python-mode-map (kbd "M-i") 'python-goodies/python-shell-smart-switch)
