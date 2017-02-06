@@ -194,9 +194,7 @@
   (if (and python-use-pep8 (not python-goodies/pep8-exists))
       (message "Warning:  pep8 executable not found"))
   (if (and python-use-pylint (not python-goodies/pylint-exists))
-      (message "Warning:  pylint executable not found"))
-
-)
+      (message "Warning:  pylint executable not found")))
 
 (defun python-goodies/filter-star-builtins (filename)
   "eliminate `from builtins import *` from python file so flymake
