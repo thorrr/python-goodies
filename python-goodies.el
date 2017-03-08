@@ -24,7 +24,7 @@
   "Use pep8 with flymake"
   :type 'boolean)
 
-(defcustom python-pep8-options "--ignore=E124,E265,E701,E702,E129"
+(defcustom python-pep8-options "--ignore=E124,E265,E701,E702,E129,E114"
   "pep8 command line options"
    :type 'string)
 
@@ -33,8 +33,8 @@
   :type 'boolean)
 
 (defcustom python-pylint-options  "--output-format=parseable --reports=n\
-                                  --extension-pkg-whitelist=numpy\
-                                  --disable=I0011,R0913,C0103,C0302,C0111,W0511,C0325"
+                                   --extension-pkg-whitelist=numpy\
+                                   --disable=I0011,R0913,C0103,C0302,C0111,W0511,C0325"
   "pylint command line options"
   :type 'string)
 
