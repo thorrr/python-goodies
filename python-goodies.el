@@ -1,311 +1,73 @@
+;;; python-goodies.el --- customizations of builtin emacs mode
+
+;; Copyright (C) 2017 Jason Bell
+
+;; Author: Jason Bell <jbellthor@gmail.com>
+;; Version: 1.0.0
+;; Package-Requires: ((emacs "24.1")
+;;                    (python "0.25.1")
+;;                    (cl "0.0.1")
+;;                    (load-relative "20160716.438")
+;;                    (ac-python-async "20150925")
+;;                    (flymake "")
+;;                   )
+;; Keywords: python
+;; URL: https://github.com/thorrr/python-goodies
+
+;;; Commentary:
+
+;; Provides functions to automatically detect and setup virtual environments,
+;; reasonable keybindings, setup rope correctly, auto-complete, and more.
+
+;;; Code:
 (require 'python)
 (require 'cl)
 (add-to-list 'auto-mode-alist '("\\.py\\'" . python-mode))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Customizable variables
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defcustom python-column-width 80
-  "Set fill-column to this value in python files.  Also, if using
-  pep8, warn when columns exceed this value"
-  :type 'integer
-  )
-
-(defcustom pymacs-parent-dir nil
-  "Set this if you have pymacs/ropemacs installed"
-  :type 'directory
-  )
-
-(defcustom python-use-pyflakes nil
-  "Use pyflakes with flymake"
-  :type 'boolean)
-
-(defcustom python-use-pep8 nil
-  "Use pep8 with flymake"
-  :type 'boolean)
-
-(defcustom python-pep8-options "--ignore=E124,E265,E701,E702,E129,E114"
-  "pep8 command line options"
-   :type 'string)
-
-(defcustom python-use-pylint nil
-  "Use pylint with flymake"
-  :type 'boolean)
-
-(defcustom python-pylint-options  "--output-format=parseable --reports=n\
-                                   --extension-pkg-whitelist=numpy\
-                                   --disable=I0011,R0913,C0103,C0302,C0111,W0511,C0325"
-  "pylint command line options"
-  :type 'string)
-
-(defcustom auto-python-just-source-file nil
-  "Automatically run python-just-source-file periodically"
-  :type 'boolean)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Python specific keybindings
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(add-hook 'python-mode-hook (lambda ()
-  (define-key python-mode-map (kbd "C-M-<return>") 'python-goodies/python-send-buffer)
-  (if pymacs-parent-dir (progn
-    (define-key python-mode-map (kbd "M-.") 'python-goodies/rope-goto-definition)
-    (define-key python-mode-map (kbd "M-,") 'python-goodies/rope-go-backward)))
-  (define-key python-mode-map (kbd "M-i") 'python-goodies/python-shell-smart-switch)
-  (define-key python-mode-map (kbd "C-c C-j") 'python-goodies/eval-line)
-  (define-key python-mode-map (kbd "S-<f4>") 'python-goodies/restart-python-repl)
-))
-
-(add-hook 'inferior-python-mode-hook (lambda ()
-  (define-key inferior-python-mode-map (kbd "M-i") 'python-goodies/python-shell-smart-switch)
-  (define-key inferior-python-mode-map [down] 'comint-next-matching-input-from-input)
-  (define-key inferior-python-mode-map [up] 'comint-previous-matching-input-from-input)
-  (define-key inferior-python-mode-map [f4] 'python-goodies/restart-python-repl)
-))
-
-(add-hook 'ropemacs-mode-hook (lambda ()
-  (define-key ropemacs-local-keymap (kbd "M-?") 'ac-start)
-  (define-key ropemacs-local-keymap (kbd "M-/") 'hippie-expand)
-  ;;add menu item to Rope menu
-  (define-key-after (lookup-key ropemacs-local-keymap [menu-bar Rope])
-    [setup-virtualenv] '("Setup Virtualenv" . rope-set-virtualenv) 'rope-set-virtualenv)
-))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Inferior Python shell setup variables
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defcustom python-inferior-shell-type 'python
-  "Customize inferior shells to be \"python\" or \"ipython\"."
-  :type 'symbol
-  :options '(python ipython)
-  )
-
-
-(defun python-shell-setup (shell-type)
-  (if (not (or (eq shell-type 'python) (eq shell-type 'ipython)))
-      (error "python-shell-setup must be called with 'python or 'ipython"))
-  (if (and (eq shell-type 'ipython) (executable-find "ipython")) (progn
-    (message "Changing python-shell-inferior variables to support ipython")
-    (setq python-shell-interpreter "ipython"
-          python-shell-interpreter-args "")
-    ;; don't need the rest of these for new emacs
-    (if (< emacs-major-version 25)
-        (setq
-         python-shell-prompt-regexp "In \\[[0-9]+\\]: "
-         python-shell-prompt-output-regexp "Out\\[[0-9]+\\]: "
-         python-shell-completion-setup-code "from IPython.core.completerlib import module_completion"
-         python-shell-completion-module-string-code "';'.join(module_completion('''%s'''))\n"
-         ;; unicode literal gets printed now so wrap the completion in a "print":  from
-         ;; https://lists.gnu.org/archive/html/bug-gnu-emacs/2016-07/msg01451.html
-         python-shell-completion-string-code (concat "print("
-                                                     "';'.join(get_ipython().Completer.all_completions('''%s'''))\n"
-                                                     ")\n")
-         )))
-    ;; else set regular python mode with some helpful messages if the user wants ipython mode
-    (if (and (eq shell-type 'ipython) (not (executable-find "ipython")))
-        (message "Warning - ipython not installed in python base installation.  Changing shell-type back to 'python")
-      (message "Changing python-shell-inferior variables to support python"))
-    (setq python-shell-interpreter (eval (car (get 'python-shell-interpreter 'standard-value)))
-     python-shell-interpreter-args (eval (car (get 'python-shell-interpreter-args 'standard-value))))
-    ;; don't need the rest of these for new emacs
-    (if (< emacs-major-version 25)
-        (setq
-         python-shell-prompt-regexp (eval (car (get 'python-shell-prompt-regexp 'standard-value)))
-         ;;sometimes prompts "build up" in the inferior processes so filter them out
-         python-shell-prompt-output-regexp "\\(>>> \\)*" ;;(eval (car (get 'python-shell-prompt-output-regexp 'standard-value)))
-         python-shell-completion-setup-code (eval (car (get 'python-shell-completion-setup-code 'standard-value)))
-         python-shell-completion-module-string-code (eval (car (get 'python-shell-completion-module-string-code 'standard-value)))
-         python-shell-completion-string-code
-         ;; unicode literal gets printed now so wrap the completion in a "print":  from
-         ;; https://lists.gnu.org/archive/html/bug-gnu-emacs/2016-07/msg01451.html
-         (concat "print("
-                 (eval (car (get 'python-shell-completion-string-code 'standard-value)))
-                 ")\n"))
-     )))
-
+(require 'load-relative)
+(load-relative "custom-variables.el")
+(load-relative "global-functions.el") ;; subsequent modules can depend on these
+(load-relative "keybindings.el")
+(load-relative "inferior-python-shell-setup.el")
+(load-relative "pymacs-rope.el")
+(load-relative "autocomplete.el")
+(load-relative "flymake-python.el")
+(load-relative "eldoc.el")
+(load-relative "source-file.el")
+(load-relative "pdb.el")
+(load-relative "virtualenv.el")
+(load-relative "commands.el")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Global Setup
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;;;;;;;;;;;;;;;;;;;;
-;; Column width
-;;;;;;;;;;;;;;;;;;;;
-(unless (fboundp 'setq-local)
-  (defmacro setq-local (var val)
-    `(set (make-local-variable ',var) ,val)))
-
-;; don't override the global fill column width
 (add-hook 'python-mode-hook (lambda ()
+  ;; don't override the global fill column width
   (setq-local fill-column python-column-width)
-))
-
-
-;;;;;;;;;;;;;
-;; Pymacs
-;;;;;;;;;;;;;
-;; can't use python-shell-extra-pythonpaths because these have to be set before we require 'pymacs
-(defun pymacs-setup ()
-  (if (not (boundp 'python-goodies/_pymacs-initiated))
-      (setq python-goodies/_pymacs-initiated nil))
-  (if (and pymacs-parent-dir
-           (not python-goodies/_pymacs-initiated)) (progn
-    (setenv "PYTHONPATH" (concat
-      (concat pymacs-parent-dir "Pymacs" path-separator)
-      (concat pymacs-parent-dir "ropemacs" path-separator)
-      (concat pymacs-parent-dir "ropemode" path-separator)
-      (concat pymacs-parent-dir "rope" path-separator)
-      (getenv "PYTHONPATH")))
-    (require 'pymacs)
-    (setq pymacs-auto-restart t)
-    (setq python-goodies/_pymacs-initiated 't) ;;only have to do this once per emacs session
-    )))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Autocomplete
-;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(require 'ac-python-async) ;; a source for python auto-complete that comes from the
-                           ;; *Python* buffer or the unnamed "internal" process
-
-(add-hook 'python-mode-hook (lambda ()
-  ;; by default emacs uses the dictionary and other buffers as
-  ;; completion sources which is super lame in practice.  Turn this off.
-  (setq ac-sources (delete 'ac-source-abbrev ac-sources))
-  (setq ac-sources (delete 'ac-source-dictionary ac-sources))
-  (setq ac-sources (delete 'ac-source-words-in-same-mode-buffers ac-sources))
-  (if (not (boundp 'python-goodies/_yasnippet-started)) (progn
-    (setq python-goodies/_yasnippet-started nil)
-    (require 'yasnippet)
-    (yas-reload-all)))
-  (yas-minor-mode)
-  (add-to-list 'ac-sources 'ac-source-yasnippet)
-))
-
-;;;;;;;;;;;;;;;;;;;;;;;;
-;; Flymake
-;;;;;;;;;;;;;;;;;;;;;;;;
-(require 'flymake)
-;; run these once globally since they're slow
-(let* ((exe (if (eq system-type 'windows-nt) ".exe" "")))
-  (setq python-goodies/pyflakes-exists (if (executable-find (concat "pyflakes" exe)) 't nil))
-  (setq python-goodies/pep8-exists (if (executable-find (concat "pep8" exe)) 't nil))
-  (setq python-goodies/pylint-exists (if (executable-find (concat "pylint" exe)) 't nil))
-  (if (and python-use-pyflakes (not python-goodies/pyflakes-exists))
-      (message "Warning:  pyflakes executable not found"))
-  (if (and python-use-pep8 (not python-goodies/pep8-exists))
-      (message "Warning:  pep8 executable not found"))
-  (if (and python-use-pylint (not python-goodies/pylint-exists))
-      (message "Warning:  pylint executable not found")))
-
-(defun python-goodies/filter-star-builtins (filename)
-  "eliminate `from builtins import *` from python file so flymake
-   isn't triggered by it"
-  (with-temp-file filename
-    (insert-file-contents filename)
-    (while (re-search-forward "^from +builtins +import +\\*" nil 't)
-      (replace-match "" nil nil)))
-  filename)
-
-(defun flymake-python-build-cmd-line ()
-  ;; relies on global variables: pyflakes-exists, pep8-exists, pylint-exists
-  (let ((use-pyflakes (and python-use-pyflakes python-goodies/pyflakes-exists))
-        (use-pep8 (and python-use-pep8 python-goodies/pep8-exists))
-        (use-pylint (and python-use-pylint python-goodies/pylint-exists)))
-    (if (or use-pyflakes use-pep8 use-pylint)
-        (let* ((temp-file (flymake-init-create-temp-buffer-copy
-                           'flymake-create-temp-inplace))
-               (temp-file (python-goodies/filter-star-builtins temp-file))
-               (local-file (file-relative-name
-                            temp-file
-                            (file-name-directory buffer-file-name)))
-               (pep8-options-list (split-string python-pep8-options))
-               (pylint-options-list (split-string python-pylint-options))
-               
-               (virtualenv-python (concat python-shell-virtualenv-path bin-python))
-               ;; bind local var pylint-in-venv so we don't do call-process again and again
-               (pylint-installed-in-virtualenv (or (bound-and-true-p python-goodies/_pylint-in-venv)
-                   ;; python-shell-virtualenv-path will be non-nil if we're in a virtualenv
-                     (if python-shell-virtualenv-path
-                         ;; return our local variable if we've already checked
-                         (if (boundp 'python-goodies/_pylint-in-venv) python-goodies/_pylint-in-venv
-                           (if (zerop (call-process virtualenv-python nil nil nil python-goodies/pylint-script "-h"))
-                               (setq-local python-goodies/_pylint-in-venv 't)
-                             (if use-pylint (message (format
-                                 "Warning:  pylint not installed in virtualenv %s; package imports won't be detected"
-                                 python-shell-virtualenv-path)))
-                             (setq-local python-goodies/_pylint-in-venv nil)
-                             'not-installed-in-virtualenv)))))
-               ;; use system python if pylint isn't in the virtualenv
-               (pylint-exe (if (eq pylint-installed-in-virtualenv 't)
-                               virtualenv-python
-                             "python"))
-               ;; Finally, build a command that runs any combination of pyflakes, pep8 and
-               ;; pylint.  First argument is the shell to run: bash or cmd.  Second
-               ;; argument is a list of arguments to the shell.  For bash it _must_ have
-               ;; exactly two elements: "-c" and a single string with the subcommand to
-               ;; run.  Don't surround it in single quotes.  The resulting process is
-               ;; equivalent to doing the following on the command line:
-               ;;
-               ;; bash -c ' ( pyflakes common_flymake.py ; pep8 common_flymake.py ) '
-               (shell (if (eq system-type 'windows-nt) "cmd" "bash"))
-               (cmd-switch (if (eq system-type 'windows-nt) "/c" "-c"))
-               (cmd-sep (if (eq system-type 'windows-nt) "&" ";"))
-               (rv (list shell
-                 `(,cmd-switch
-                   ;; use mapconcat to build a string with spaces in between arguments
-                   ,(mapconcat 'identity `(
-                     ,@(if (not (eq system-type 'windows-nt)) '("( "))
-                     ;; pyflakes command
-                     ,@(if use-pyflakes `("pyflakes" ,local-file))
-                     ;; separate if there was a previous command
-                     ,@(if (and use-pep8 use-pyflakes) `(,cmd-sep))
-                     ;; pep8 command
-                     ,@(if use-pep8 `("pep8" ,@pep8-options-list
-                                      ,(concat "--max-line-length=" (format "%d" python-column-width)) ,local-file))
-                     ;; separate again - check for any previous command
-                     ,@(if (and use-pylint (or use-pyflakes use-pep8)) `(,cmd-sep))
-                     ;; pylint command - virtualenv friendly
-                     ,@(if use-pylint `(;; equivalent to 'python $(where pylint)' inside virtualenv
-                                        ,pylint-exe ,python-goodies/pylint-script
-                                                    ,(concat " --max-line-length=" (format "%d" (+ 1 python-column-width)))
-                                                    ,@pylint-options-list ,local-file))
-                     ;; properly wrap the combined command
-                     ,@(if (not (eq system-type 'windows-nt)) '(" ; )"))
-                     ) " ")))))
-          rv)
-      (progn (message
-              "Warning:  flymake won't run because neither pyflakes nor pep8 nor pylint were selected") nil))))
-
-;; create pylint file to run inside virtualenv - I can't figure out how to escape this
-;; under 'cmd /c python -c'
-(setq python-goodies/pylint-script (make-temp-file "pylint"))
-(with-temp-file python-goodies/pylint-script
-  (insert "from pylint import run_pylint;\
-               import sys;\
-               sys.exit(run_pylint())"))
-
-(add-hook 'python-mode-hook (lambda ()
-  (add-to-list 'flymake-allowed-file-name-masks '("\\.py\\'" flymake-python-build-cmd-line))))
-
-(add-hook 'python-mode-hook (lambda ()
-  ;;modify pyflakes' output
-  ;; use \\| to separate multiple match criteria
-  (setq flymake-warn-line-regexp "imported but unused\\|unable to detect undefined names\\|E[0-9]+")
-  (setq flymake-info-line-regexp "is assigned to but never used\\|W[0-9]+")))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Hooks - miscellaneous setup when loading a python file
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(add-hook 'python-mode-hook (lambda ()
   (set-variable 'python-indent-offset 4)
   (set-variable 'indent-tabs-mode nil)
-  (python-shell-setup python-inferior-shell-type)
+))
 
-  ;; An Internal Process is created for each unique configuration.
+;; make sure our inferior buffers are properly virtualenv aware too
+(add-hook 'inferior-python-mode-hook (lambda ()
+  (python-shell-setup python-inferior-shell-type)  ;; TODO - get rid of this
+  (virtualenv-hook)))
+
+(add-hook 'inferior-python-mode-hook (lambda ()
+  ;; jump to the bottom of the comint buffer if you start typing
+  (setq-local comint-scroll-to-bottom-on-input t)))
+
+;; turn off "Active processes exist" warning for *Python* processes
+(add-hook 'comint-exec-hook (lambda ()
+    (set-process-query-on-exit-flag (get-buffer-process (current-buffer)) nil)))
+
+(add-hook 'python-mode-hook (lambda ()
+  (python-shell-setup python-inferior-shell-type)  ;; TODO - get rid of this
+
   ;; Set up each file's virtualenv before calling python-just-source-file so that each virtualenv
   ;; will have a single internal process
   (virtualenv-hook)
+  
   ;; source the file and then send our virtualenv and shell complete code to the internal process
   ;; don't source a file if it's a python repl buffer or other non-filename buffer
   (if (buffer-file-name) (progn
@@ -313,434 +75,24 @@
     ;; send an newline to clear the internal buffer because ipython sometimes hangs with a
     ;; "WARNING: Attempting to work in a virtualenv" message
     (if (< emacs-major-version 25)
-        (run-at-time "3 sec" nil 'python-shell-send-string "\n" (python-shell-internal-get-or-create-process)
-                     "Warning: python-source-file-to-internal-process was called 3 seconds ago but there's no live process"))
+        (run-at-time "3 sec"
+            nil 'python-shell-send-string "\n" (python-shell-internal-get-or-create-process)
+            "Warning: python-source-file-to-internal-process was called 3 seconds ago "
+            "but there's no live process"))
     (if (check-for-virtualenv (python-get-named-else-internal-process))
-        (message (concat "Virtualenv successfully activated in internal python process for " (buffer-file-name))))))
+        (message (concat "Virtualenv successfully activated in internal python process for "
+                         (buffer-file-name))))))
   (if (check-for-readline (python-get-named-else-internal-process)) 't
-    (message "Warning:  readline not detected on system.  autocomplete from process won't work.\npip install pyreadline to set it up"))
-  (if pymacs-parent-dir (progn
-    (pymacs-setup)
-    (python-goodies/turn-on-ropemacs))) ;;something repeatedly calls pymacs-load "ropemacs" so you have to switch it back on
-  ))
+    (message
+     "Warning:  readline not detected on system.  "
+     "autocomplete from process won't work.\npip install pyreadline to set it up"))
 
-;; make sure our inferior buffers are properly virtualenv aware too
-(add-hook 'inferior-python-mode-hook (lambda ()
-  (python-shell-setup python-inferior-shell-type)
-  (virtualenv-hook)))
-
-
-(add-hook 'inferior-python-mode-hook (lambda ()
-  ;; jump to the bottom of the comint buffer if you start typing
-  (setq-local comint-scroll-to-bottom-on-input t)))
-
-;; turn off "Active processes exist" warning for *Python* processes
-(add-hook 'comint-exec-hook 
-      (lambda () (set-process-query-on-exit-flag (get-buffer-process (current-buffer)) nil)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; eldoc tweaks
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(add-hook 'python-mode-hook 'turn-on-eldoc-mode)
-;; turn on eldoc properly using the internal process
-(defadvice python-eldoc--get-doc-at-point (around python-eldoc--get-doc-at-point-around activate)
-  (let ((force-process (python-get-named-else-internal-process)))
-    ad-do-it))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Misc functions
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defun check-for-readline (process)
-  "return 't if we can import readline.  if we can't autocomplete will be silently broken"
-  (if (not process) (progn (message "warning:  no process in check-for-readline") nil)
-    (let ((repl-out (python-shell-send-string-no-output "import readline;''" process)))
-      (if (string-match "^\\(>>> \\)*''" repl-out) 't nil))))
-
-(defun check-for-virtualenv (process)
-  "return 't if this process is a virtualenv."
-  (if (not process) (progn (message "warning:  no process in check-for-virtualenv") nil)
-    (let ((repl-out (python-shell-send-string-no-output "import sys;  hasattr(sys, 'real_prefix')" process)))
-      (string= repl-out "True"))))
-
-;; This equivalent function doesn't exist in Gallina's code
-(defun python-get-named-else-internal-process ()
-  "return the current global process if there is one.  Otherwise,
-start an internal process and return that."
-  (let ((process (or (python-shell-get-process)
-                     (python-shell-internal-get-or-create-process))))
-    process))
-
-(defun python-destroy-side-effects-in-buffer ()
-  "In the current buffer get rid of any code that potentially can
-lead to side effects.  Only top level keywords plus the following
-scope or MyClass = namedtuple(...) are allowed."
-  (let ((keywords
-         ;; must have spaces after keyword so
-         ;; defaultString = "foo"
-         ;; isn't picked up
-         '("def " "class " "from " "import " "@"
-           ;; allow classes to be defined using namedtuple:
-           ;; Point = namedtuple('Point', ['x', 'y'])
-           "\\([[:alpha:]]\\|_\\)\\([[:alnum:]]\\|_\\)* *= *\\(collections\\.\\)?namedtuple *(")))
-    (let ((more-lines 't)
-          (side-effect-start nil))
-      (goto-char (point-min))
-      ;; first, get rid of if __name__ == "__main__":
-      (save-excursion
-        (when (python-nav-if-name-main)
-          (delete-region (point) (progn
-            (python-nav-forward-sexp-safe)
-            (forward-line 1)
-            (point)))))
-      ;; now, iterate through the buffer line-by-line
-      (while more-lines
-        (let ((is-start-of-line-token (looking-at "[[:alpha:]]"))
-              (is-keyword (member 't (mapcar (lambda (keyword) (looking-at keyword)) keywords))))
-          ;; detect the state of the current line and act
-          (cond ;; start deleting - we're seeing a side effect
-                ((and is-start-of-line-token (not is-keyword) (not side-effect-start))
-                 (setq side-effect-start (point)))
-                ;; stop deleting - we're inside a side effect but we've hit the next keyword
-                ((and is-start-of-line-token is-keyword side-effect-start)
-                 (delete-region side-effect-start (point))
-                 (setq side-effect-start nil))))
-        ;;now move cursor past any triple quotes that start on this line
-        (if (looking-at ".*?\"\"\"") (progn
-              (re-search-forward ".*?\"\"\"" nil)
-              (re-search-forward ".*?\"\"\"" nil 'eof)))
-        (if (looking-at ".*?'''") (progn
-              (re-search-forward ".*?'''" nil)
-              (re-search-forward ".*?'''" nil 'eof)))
-        ;;then bump to next line
-        (setq more-lines (= 0 (forward-line 1))))
-      ;;finally, delete the last region if we saw something before EOF
-      (if side-effect-start
-          (delete-region side-effect-start (point-max)))
-      )))
-
-(defun python-add-package-directory-string (filename)
-  "Evaluate this string in the repl to add the root project
-directory.  This allows modules deep in the project hierarchy to
-be sourced without relative import errors "
-  (let ((package-directory (detect-package-directory filename)))
-    (concat "import sys;\nif sys.path.count('" package-directory "') == 0:\n"
-                   "  sys.path.insert(0, '" package-directory  "')\n")))
-
-
-(defun python-just-source-file (filename process)
-  "Force process to evaluate filename but don't run __main__ or any other code that can have side effects.
-   Wraps Gallina's python-shell-send-buffer to let us specify
-   both filename and process"
-  (if (not process) (message (concat "warning:  internal process doesn't exist for" filename "; not sourcing"))
-    (if (not (file-exists-p filename))
-        (message (concat "INFO:  not sourcing " filename " because it hasn't been saved yet."))
-      (progn
-        (message (format "Sourcing %s into %s" filename process))
-        (python-shell-send-string
-         (python-add-package-directory-string filename) process)
-        (let ((prog-string
-               (with-temp-buffer (progn
-                 (insert-file-contents filename)
-                 (python-destroy-side-effects-in-buffer)
-                 (buffer-string)))))
-          (python-shell-send-string prog-string process)))))
-  't)
-
-(defun python-source-file-to-internal-process (filename)
-  "send a file to the internal process with the proper directory setup code"
-  (let ((internal-process (python-shell-internal-get-or-create-process))
-        ;; nasty hack that's not needed on emacs 25 anymore
-        (python-shell-send-setup-code-to-process (lambda (process)
-          "Gallina's python-shell-send-setup-code doesn't allow a process argument"
-          (cl-letf* (((symbol-function 'get-buffer-process) (lambda (_) process)))
-            (python-shell-send-setup-code)
-            process))))
-    (if (not internal-process) (message (format "Warning - internal process is nil for %s" filename))
-      (if (< emacs-major-version 25)
-          (funcall 'python-shell-send-setup-code-to-process internal-process))
-      (python-shell-send-string (python-add-package-directory-string filename) internal-process)
-      ;; now send the actual code inside filename
-      (python-just-source-file filename internal-process))))
-
-(if auto-python-just-source-file (add-hook 'after-save-hook (lambda ()
-  (python-source-file-to-internal-process (buffer-file-name)))))
-
-(defun python-switch-to-internal-process ()
-  (interactive)
-  (switch-to-buffer (concat " *" (python-shell-internal-get-process-name) "*")))
-
-;; add the 'Hide All defs' menu item if we're in hide-show mode
-(defun hide-all-defs ()
-  (interactive)
-  (save-excursion
-    (goto-char (point-min))
-    (let ((end-found nil))
-      (while (not end-found)
-        (setq end-found (not (search-forward-regexp "^ *def" nil 't)))
-        (if (not end-found) (progn
-          (beginning-of-line)
-          (hs-hide-block)
-          (forward-line)))))))
-
-(add-hook 'python-mode-hook (lambda ()
-  (if (boundp 'hs-minor-mode)
-      (define-key-after (lookup-key hs-minor-mode-map [menu-bar Hide/Show])
-        [hide-all-defs] '("Hide All defs" . hide-all-defs) 'hide-all-defs))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; PDB
-;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; adapted from http://pedrokroger.com/2010/07/configuring-emacs-as-a-python-ide-2/
-(defun python-add-breakpoint ()
-  (interactive)
-  (newline-and-indent)
-  ;; TODO:  autodetect ipdb and change this line accordingly
-  (insert "import pdb; pdb.set_trace()")
-  (highlight-lines-matching-regexp "^[ 	]*import i?pdb; i?pdb.set_trace()"))
-(define-key python-mode-map (kbd "C-c C-b") 'python-add-breakpoint)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Virtualenv support
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defcustom auto-detect-virtualenv nil
-  "When loading a python file attempt to find its virtualenv using function detect-virtualenv.")
-
-(defconst bin-python-dir
-  (if (eq system-type 'windows-nt) "Scripts/" "bin/")
-  "root directory of the python executable based on emacs architecture")
-
-(defconst bin-python
-  (concat bin-python-dir (if (eq system-type 'windows-nt)  "python.exe" "python"))
-  "path to the python executable based on emacs architecture")
-
-(defun set-virtualenv (dir)
-  (interactive "D")
-  (setq python-shell-virtualenv-path (expand-file-name dir))
-  (virtualenv-hook)
-  't)
-
-(defun detect-virtualenv (filename)
-  "return directory containing virtualenv python[.exe] if it can
-  detect this python file has a virtualenv in its path"
-  (if filename
-  (ldf-compat (file-name-directory filename)
-   (lambda (cd)
-     (let* ((subdir-p (lambda (dir) (if (file-directory-p dir) dir nil)))
-            (ls (mapcar (lambda (f) (concat cd f)) (directory-files cd)))
-            (subdirs (delq nil (mapcar subdir-p ls)))
-            (subdirs-that-have-bin/python (delq nil (mapcar (lambda (dir)
-              (if (file-regular-p (concat (file-name-as-directory dir) bin-python))
-                  dir nil))
-                 subdirs)))
-            (virtualenv-dir (car subdirs-that-have-bin/python))
-            (virtualenv-dir (if virtualenv-dir
-              ;; sometimes we're left with a relative path i.e. scripts/lib/..
-              (file-name-as-directory (expand-file-name virtualenv-dir)) nil)))
-       (if virtualenv-dir (progn
-         (message (concat "Found " virtualenv-dir " as virtualenv for " filename))
-         virtualenv-dir) nil)))) nil))
-
-(defun detect-package-directory (filename)
-  "return first parent directory that does not contain __init__.py"
-  (ldf-compat (file-name-directory filename)
-     (lambda (cd)
-       (if (file-exists-p (concat cd "__init__.py"))
-           nil cd))))
-
-(defun ldf-compat (current-dir fn-or-subdir)
-  "Partial replacement for locate-dominating-file.
-
-  Starting from current-dir, walk up directory tree
-until (fn-or-subdir current-dir) returns non nil or (concat
-current-dir fn-or-subdir) exists.
-
-  fn-or-subdir can be a filename (\"env\" for example) or a
-function that takes a single argument "
-  (defun parent-directory (dir)
-    (unless (string-match "^\\([a-z]:\\)*/$" dir)
-      (file-name-directory (directory-file-name dir))))
-  (let* ((f (if (functionp fn-or-subdir)
-              fn-or-subdir  
-              (lambda (cd) (file-exists-p (concat cd fn-or-subdir)))))
-         (cd (file-name-directory (expand-file-name current-dir)))
-         (good-dir (funcall f current-dir))
-         (parent (parent-directory cd)))
-    (if good-dir good-dir
-      (when parent
-        (ldf-compat parent fn-or-subdir)))))
-
-  
-(defvar python-goodies/virtualenv-activate-command ""
-  "The current virtualenv activate command.  We can't make this
-  buffer-local since the comint hooks don't run under our
-  buffer's scope")
-(defun virtualenv-hook ()
-  "This should be run before any comints are run.  And re-run
-when opening a new file."
-  (make-local-variable 'python-shell-virtualenv-path)
-  (add-to-list 'python-shell-setup-codes 'python-goodies/virtualenv-activate-command)
-  (if auto-detect-virtualenv
-      (let ((detected-virtualenv (detect-virtualenv (buffer-file-name))))
-        (if detected-virtualenv
-            (setq python-shell-virtualenv-path detected-virtualenv))))
-  
-  ;; the following doesn't work because pymacs has already been called at this point
-  ;; (make-local-variable 'pymacs-python-command)
-  ;; (setq pymacs-python-command (concat python-shell-virtualenv-path bin-python))
-  
-  ;; If we've detected a virtualenv specialize setup codes to
-  ;; activate it in all new shells.
-  (if (file-exists-p (concat python-shell-virtualenv-path bin-python-dir "activate_this.py")) (progn
-     (setq python-goodies/virtualenv-activate-command
-           (concat "af = \"" python-shell-virtualenv-path bin-python-dir
-                   "activate_this.py\"; execfile(af, dict(__file__=af))\n"))
-     ))
-
-  ;; finally, if we're using ipython, update the current value of python-shell-interpreter-args
-  (if (eq python-inferior-shell-type 'ipython)
-      (let ((ipython-script
-             (expand-file-name "ipython-script.py"
-                               (format "%s/%s" python-shell-virtualenv-path bin-python-dir))))
-        (if (not (file-exists-p ipython-script))
-            (message (concat "Warning:  inferior-shell-type is 'ipython but we can't find "
-                             "ipython-script.py in the virtualenv.\nOn Windows make sure "
-                             "you've installed it with pip install ipython --no-use-wheel."))
-          ;; else call the interpreter with the ipython inside the virtualenv
-          (setq python-shell-interpreter-args (concat "-u " ipython-script))))))
-
-(defun set-virtualenv-in-rope-config (rope-config-filename virtualenv-dir)
-  (let* ((activate-script-name (concat virtualenv-dir bin-python-dir "activate_this.py"))
-         (execfile-line (concat "    execfile(\"" activate-script-name
-                                "\", dict(__file__=\"" activate-script-name "\"))")))
-    (if virtualenv-dir (with-temp-buffer
-      (insert-file-contents rope-config-filename)
-      (goto-char (point-min))
-      (if (re-search-forward execfile-line nil 't 1)
-          'exists (progn
-                    (let ((is-rope-config-file (re-search-forward "^def set_prefs(prefs):" nil 't)))
-                      (if (not is-rope-config-file)
-                          (error (concat "file " rope-config-filename " isn't a rope project file"))))
-                    (next-line)
-                    (next-line)
-                    (move-beginning-of-line nil)
-                    (delete-region (point) (save-excursion (end-of-line) (point)))
-                    (insert execfile-line)
-                    (write-file rope-config-filename)
-                    'modified
-                    )))
-      (message "Warning: virtualenv not set, not changing rope config"))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Commands
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defun pymacs-reload-rope () 
-    "Reload rope"
-    (interactive)
-    (cl-letf (((symbol-function 'yes-or-no-p) (lambda (&optional _) 't)))
-      (pymacs-terminate-services)
-      (pymacs-load "ropemacs" "rope-")))
-
-(defun rope-set-virtualenv ()
-  "add virtualenv setup to rope project"
-  (interactive)
-  (virtualenv-hook)
-  (let* ((find-rope-config-file (lambda ()
-     ;; "grab the argument to find-file by redefining it in rope-project-config's context"
-           (let ((filename nil))
-	     (cl-letf (((symbol-function 'find-file)
-			(lambda (find-file-filename) (setq filename find-file-filename))))
-	       (rope-project-config))
-	     (if (eq system-type 'cygwin)
-		 (concat "/cygdrive/" (substring filename 0 1) (substring filename 2))
-	       filename))))
-         (set? (set-virtualenv-in-rope-config (funcall find-rope-config-file) python-shell-virtualenv-path)))
-    (if (eq set? 'modified) (progn
-        (print (concat "virtualenv " python-shell-virtualenv-path 
-		       " reset in rope project config, restarting pymacs."))
-	(pymacs-reload-rope)))
-    't))
-
-(defun python-goodies/turn-on-ropemacs ()
-  (interactive)
-  (setq ropemacs-enable-shortcuts nil) ;;otherwise this overwrites M-/ and M-?
-
-  ;; rope-auto-import works but M-x rope-generate-autoimport-cache is
-  ;; extremely heavy (gigabytes of RAM for quite small projects).
-  ;; Turn this off for now
-  (setq ropemacs-enable-autoimport nil)
-  (setq ropemacs-autoimport-modules `("os" "shutil"))
-
-  (if (not (boundp 'ropemacs-mode)) (pymacs-load "ropemacs" "rope-"))
-  (if (and (boundp 'ropemacs-mode) (not ropemacs-mode)) (ropemacs-mode))
-  ;; hook rope into auto-complete - this slows down everything so it's disabled for now
-  ;; (ac-ropemacs-initialize)
-  ;; (add-to-list 'ac-sources 'ac-source-ropemacs)
-)
-
-(defun python-goodies/rope-goto-definition ()(interactive) (push-current-location) (rope-goto-definition)) 
-(defun python-goodies/rope-go-backward () (interactive) (pop-current-location))
-(defun python-goodies/python-send-buffer ()
-  (interactive)
-  (run-python)
-  ;; add the top level package to sys.path
-  (python-shell-send-string (python-add-package-directory-string (buffer-file-name)))
-  ;; now source the entire file verbatim into the visible repl
-  (python-shell-send-buffer)
-  (python-goodies/python-shell-smart-switch))
-
-(defun python-goodies/python-shell-smart-switch ()
-  (interactive)
-  (let ((saved-point (point))
-	(saved-frame (selected-frame))
-	(saved-window (selected-window)))
-    (if (string= (python-shell-get-process-name t) "Python") (end-of-buffer) ;;we are in the inferior buffer
-      (let ((display-buffer-reuse-frames t))
-        ;; the following isequivalent to (python-shell-switch-to-shell) but ACTION=nil so
-        ;; we don't split into a new buffer, which is annoying
-        (pop-to-buffer (process-buffer (python-shell-get-or-create-process)))
-        ;;and set the cursor at the first repl line
-        (end-of-buffer)))
-    (if (and (eq saved-point (point))
-             (eq saved-frame (selected-frame))
-             (eq saved-window (selected-window))) ;;nothing moved - we're at the end of the inferior buffer
-        (progn
-          (raise-frame my-python-most-recent-frame)
-          (select-window my-python-most-recent-window))
-      (if (not (eq saved-window (selected-window))) ;;moved to a different window
-          (progn (setq my-python-most-recent-frame saved-frame)
-                 (setq my-python-most-recent-window saved-window)
-                 )))))
-
-(defun python-goodies/restart-python-repl () (interactive)
-  (let ((process (python-shell-get-or-create-process))
-        (in-repl (eq major-mode 'inferior-python-mode)))
-    (if in-repl (other-window 1))
-    (python-shell-send-string "quit()" process)
-    (sleep-for 0.1)
-    (python-shell-get-or-create-process)
-    (if in-repl (sleep-for 0.1) (other-window 1) (end-of-buffer))
+  ;; start pymacs now that virtualenv is set up
+  (pymacs-setup)
+  ;;something repeatedly calls pymacs-load "ropemacs" so you have to switch it back on
+  (python-goodies/turn-on-ropemacs)
 ))
 
-;; I never want run-python to ask me for a path
-;;( defun run-python (&optional a b) (interactive "ii")
- ;;  (python-shell-make-comint (python-shell-parse-command) (python-shell-get-process-name nil) t))
-
-(defun python-goodies/eval-line ()
-  "Evaluate the current Python line in the inferior Python process."
-  (interactive) 
-  (python-shell-send-string
-   (buffer-substring-no-properties (point) (line-end-position))
-   (python-get-named-else-internal-process)))
-
-(defun ipython-eval-region (start end)
-  "Send the region delimited by START and END to inferior ipython process."
-  (interactive "r")
-  (kill-new (buffer-substring start end))
-  (python-shell-send-string "%paste" nil t))
-
-
-
 (provide 'python-goodies)
+
+;;; python-goodies.el ends here
