@@ -20,7 +20,7 @@
   "Use pep8 with flymake"
   :type 'boolean)
 
-(defcustom python-pep8-options "--ignore=E124,E265,E701,E702,E129,E114"
+(defcustom python-pep8-options "--ignore=E124,E265,E701,E702,E129,E114,E116"
   "pep8 command line options"
    :type 'string)
 
