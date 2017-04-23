@@ -37,6 +37,7 @@
 (load-relative "pdb.el")
 (load-relative "virtualenv.el")
 (load-relative "commands.el")
+(load-relative "hide-show.el")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Global Setup
