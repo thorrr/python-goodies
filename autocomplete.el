@@ -1,6 +1,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Autocomplete
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(setq ac-python-async:get-completion-process 'python-goodies/get-or-start-completion-process)
+
 (require 'ac-python-async) ;; a source for python auto-complete that comes from the
                            ;; *Python* buffer or the unnamed "internal" process
 
