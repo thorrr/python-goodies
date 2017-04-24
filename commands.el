@@ -20,11 +20,10 @@
   (let ((saved-point (point))
 	(saved-frame (selected-frame))
 	(saved-window (selected-window)))
-    (if (string= (python-shell-get-process-name t) "Python") (end-of-buffer) ;;we are in the inferior buffer
+    (if (string= (python-shell-get-process-name t) "Python[*Python*]")
+        (end-of-buffer) ;;we are already in the inferior buffer
       (let ((display-buffer-reuse-frames t))
-        ;; the following isequivalent to (python-shell-switch-to-shell) but ACTION=nil so
-        ;; we don't split into a new buffer, which is annoying
-        (pop-to-buffer (process-buffer (python-shell-get-or-create-process)))
+        (pop-to-buffer "*Python*")
         ;;and set the cursor at the first repl line
         (end-of-buffer)))
     (if (and (eq saved-point (point))
@@ -54,7 +53,7 @@
   (interactive)
   (python-shell-send-string
    (buffer-substring-no-properties (point) (line-end-position))
-   (run-python)))
+   (run-python (python-shell-calculate-command) nil 't)))
 
 (defun ipython-eval-region (start end)
   "Send the region delimited by START and END to inferior ipython process."
