@@ -3,13 +3,29 @@
   (defmacro setq-local (var val)
     `(set (make-local-variable ',var) ,val)))
 
+(defun python-goodies/get-or-start-completion-process ()
+  "To change process name, override (python-shell-get-process-name dedicated)
+   TODO - if virtualenv activated, use same process for all buffers (for efficiency)"
+  (let ((process (python-shell-get-process)))
+    (if (not process)
+        (run-python (python-shell-calculate-command)
+                    't  ;; dedicated
+                    nil ;; show
+                    )
+      process)))
+
+(defun python-goodies/switch-to-completion-process ()
+  "For debugging"
+  (interactive)
+  (python-shell-switch-to-shell))
+
 ;; This equivalent function doesn't exist in Gallina's code
-(defun python-get-named-else-internal-process ()
-  "return the current global process if there is one.  Otherwise,
-start an internal process and return that."
-  (let ((process (or (python-shell-get-process)
-                     (python-shell-internal-get-or-create-process))))
-    process))
+;; (defun python-get-named-else-internal-process ()
+;;   "return the current global process if there is one.  Otherwise,
+;; start an internal process and return that."
+;;   (let ((process (or (python-shell-get-process)
+;;                      (python-shell-internal-get-or-create-process))))
+;;     process))
 
 (defun check-for-virtualenv (process)
   "return 't if this process is a virtualenv."

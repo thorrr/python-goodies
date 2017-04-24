@@ -65,22 +65,22 @@ scope or MyClass = namedtuple(...) are allowed."
           (python-shell-send-string prog-string process)))))
   't)
 
-(defun python-source-file-to-internal-process (filename)
+(defun python-source-file-to-completion-process (filename)
   "send a file to the internal process with the proper directory setup code"
-  (let ((internal-process (python-shell-internal-get-or-create-process))
+  (let ((completion-process (python-goodies/get-or-start-completion-process))
         ;; nasty hack that's not needed on emacs 25 anymore
         (python-shell-send-setup-code-to-process (lambda (process)
           "Gallina's python-shell-send-setup-code doesn't allow a process argument"
           (cl-letf* (((symbol-function 'get-buffer-process) (lambda (_) process)))
             (python-shell-send-setup-code)
             process))))
-    (if (not internal-process) (message (format "Warning - internal process is nil for %s" filename))
+    (if (not completion-process) (message (format "Warning - completion process is nil for %s" filename))
       (if (< emacs-major-version 25)
-          (funcall 'python-shell-send-setup-code-to-process internal-process))
-      (send-package-directory filename internal-process)
+          (funcall 'python-shell-send-setup-code-to-process completion-process))
+      (send-package-directory filename completion-process)
       ;; now send the actual code inside filename
-      (python-just-source-file filename internal-process))))
+      (python-just-source-file filename completion-process))))
 
 (if auto-python-just-source-file (add-hook 'after-save-hook (lambda ()
-  (python-source-file-to-internal-process (buffer-file-name)))))
+  (python-source-file-to-completion-process (buffer-file-name)))))
 

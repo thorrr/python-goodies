@@ -51,10 +51,10 @@
 
 (defun python-goodies/eval-line ()
   "Evaluate the current Python line in the inferior Python process."
-  (interactive) 
+  (interactive)
   (python-shell-send-string
    (buffer-substring-no-properties (point) (line-end-position))
-   (python-get-named-else-internal-process)))
+   (run-python)))
 
 (defun ipython-eval-region (start end)
   "Send the region delimited by START and END to inferior ipython process."

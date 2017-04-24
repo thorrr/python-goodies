@@ -62,28 +62,32 @@
 (add-hook 'comint-exec-hook (lambda ()
     (set-process-query-on-exit-flag (get-buffer-process (current-buffer)) nil)))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Main setup
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (add-hook 'python-mode-hook (lambda ()
   (python-shell-setup python-inferior-shell-type)  ;; TODO - get rid of this
 
-  ;; Set up each file's virtualenv before calling python-just-source-file so that each virtualenv
-  ;; will have a single internal process
+  ;; Set up each file's virtualenv before calling python-just-source-file
   (virtualenv-hook)
   
-  ;; source the file and then send our virtualenv and shell complete code to the internal process
   ;; don't source a file if it's a python repl buffer or other non-filename buffer
   (if (buffer-file-name) (progn
-    (python-source-file-to-internal-process (buffer-file-name))
+    (python-goodies/get-or-start-completion-process)
+    (python-source-file-to-completion-process (buffer-file-name))
     ;; send an newline to clear the internal buffer because ipython sometimes hangs with a
     ;; "WARNING: Attempting to work in a virtualenv" message
     (if (< emacs-major-version 25)
         (run-at-time "3 sec"
-            nil 'python-shell-send-string "\n" (python-shell-internal-get-or-create-process)
+            nil 'python-shell-send-string "\n" (python-goodies/get-or-start-completion-process)
             "Warning: python-source-file-to-internal-process was called 3 seconds ago "
             "but there's no live process"))
-    (if (check-for-virtualenv (python-get-named-else-internal-process))
-        (message (concat "Virtualenv successfully activated in internal python process for "
+    (if (check-for-virtualenv (python-goodies/get-or-start-completion-process))
+        (message (concat "Virtualenv successfully activated in completion python process for "
                          (buffer-file-name))))))
-  (if (check-for-readline (python-get-named-else-internal-process)) 't
+  (if (check-for-readline (python-goodies/get-or-start-completion-process)) 't
     (message
      "Warning:  readline not detected on system.  "
      "autocomplete from process won't work.\npip install pyreadline to set it up"))
