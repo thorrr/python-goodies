@@ -51,7 +51,8 @@
     (interactive)
     (cl-letf (((symbol-function 'yes-or-no-p) (lambda (&optional _) 't)))
       (pymacs-terminate-services)
-      (pymacs-load "ropemacs" "rope-")))
+      (pymacs-load "ropemacs" "rope-")
+      (python-goodies/add-virtualenv-setup-to-rope-menu)))
 
 (defun rope-set-virtualenv ()
   "add virtualenv setup to rope project"
