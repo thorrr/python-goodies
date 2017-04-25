@@ -49,11 +49,6 @@
   (set-variable 'indent-tabs-mode nil)
 ))
 
-;; make sure our inferior buffers are properly virtualenv aware too
-(add-hook 'inferior-python-mode-hook (lambda ()
-  (python-shell-setup python-inferior-shell-type)  ;; TODO - get rid of this
-  (virtualenv-hook)))
-
 (add-hook 'inferior-python-mode-hook (lambda ()
   ;; jump to the bottom of the comint buffer if you start typing
   (setq-local comint-scroll-to-bottom-on-input t)))
@@ -68,7 +63,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (add-hook 'python-mode-hook (lambda ()
-  (python-shell-setup python-inferior-shell-type)  ;; TODO - get rid of this
+  ;; (python-shell-setup python-inferior-shell-type)  ;; TODO - make this emacs24 specific
 
   ;; Set up each file's virtualenv before calling python-just-source-file
   (virtualenv-hook)
@@ -76,26 +71,24 @@
   ;; don't source a file if it's a python repl buffer or other non-filename buffer
   (if (buffer-file-name) (progn
     (python-goodies/get-or-start-completion-process)
-    (python-source-file-to-completion-process (buffer-file-name))
-    ;; send an newline to clear the internal buffer because ipython sometimes hangs with a
-    ;; "WARNING: Attempting to work in a virtualenv" message
-    (if (< emacs-major-version 25)
-        (run-at-time "3 sec"
-            nil 'python-shell-send-string "\n" (python-goodies/get-or-start-completion-process)
-            "Warning: python-source-file-to-internal-process was called 3 seconds ago "
-            "but there's no live process"))
-    (if (check-for-virtualenv (python-goodies/get-or-start-completion-process))
-        (message (concat "Virtualenv successfully activated in completion python process for "
-                         (buffer-file-name))))))
-  (if (check-for-readline (python-goodies/get-or-start-completion-process)) 't
-    (message
-     "Warning:  readline not detected on system.  "
-     "autocomplete from process won't work.\npip install pyreadline to set it up"))
+    (python-source-file-to-completion-process (buffer-file-name))))
 
   ;; start pymacs now that virtualenv is set up
   (pymacs-setup)
-  ;;something repeatedly calls pymacs-load "ropemacs" so you have to switch it back on
+  ;; something repeatedly calls pymacs-load "ropemacs" so you have to switch it back on
   (python-goodies/turn-on-ropemacs)
+
+  ;; delay running these to give the prompt a chance to come back
+  (run-at-time "3 sec" nil (lambda ()
+    ;; clear extra prompts from "source file" (doesn't work)
+    ;; (python-shell-send-string "\n" (python-goodies/get-or-start-completion-process))
+    (if (check-for-virtualenv (python-goodies/get-or-start-completion-process))
+        (message (concat "Virtualenv successfully activated in completion python process for "
+                         (buffer-file-name))))
+    (if (check-for-readline (python-goodies/get-or-start-completion-process)) 't
+      (message
+       "Warning:  readline not detected on system.  "
+       "autocomplete from process won't work.\npip install pyreadline to set it up"))))
 ))
 
 (provide 'python-goodies)
