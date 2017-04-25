@@ -37,32 +37,14 @@
          (message (concat "Found " virtualenv-dir " as virtualenv for " filename))
          virtualenv-dir) nil)))) nil))
 
-(defvar python-goodies/virtualenv-activate-command ""
-  "The current virtualenv activate command.  We can't make this
-  buffer-local since the comint hooks don't run under our
-  buffer's scope")
-
 (defun virtualenv-hook ()
   "This should be run before any comints are run.  And re-run when opening a new file."
   (make-local-variable 'python-shell-virtualenv-path)
-  (add-to-list 'python-shell-setup-codes 'python-goodies/virtualenv-activate-command)
   (if auto-detect-virtualenv
       (let ((detected-virtualenv (detect-virtualenv (buffer-file-name))))
         (if detected-virtualenv
             (setq python-shell-virtualenv-path detected-virtualenv))))
   
-  ;; the following doesn't work because pymacs has already been called at this point
-  ;; (make-local-variable 'pymacs-python-command)
-  ;; (setq pymacs-python-command (concat python-shell-virtualenv-path bin-python))
-  
-  ;; If we've detected a virtualenv specialize setup codes to
-  ;; activate it in all new shells.
-  (if (file-exists-p (concat python-shell-virtualenv-path bin-python-dir "activate_this.py")) (progn
-     (setq python-goodies/virtualenv-activate-command
-           (concat "af = \"" python-shell-virtualenv-path bin-python-dir
-                   "activate_this.py\"; execfile(af, dict(__file__=af))\n"))
-     ))
-
   ;; finally, if we're using ipython, update the current value of python-shell-interpreter-args
   (if (eq python-inferior-shell-type 'ipython)
       (let ((ipython-script
@@ -75,3 +57,23 @@
           ;; else call the interpreter with the ipython inside the virtualenv
           (setq python-shell-interpreter-args (concat "-u " ipython-script))))))
 
+
+;; this is copied from built in.  Hard codes "bin" which doesn't work in Windows
+(defun python-shell-calculate-exec-path ()
+  "Calculate `exec-path'.
+Prepends `python-shell-exec-path' and adds the binary directory
+for virtualenv if `python-shell-virtualenv-root' is set.  If
+`default-directory' points to a remote host, the returned value
+appends `python-shell-remote-exec-path' instead of `exec-path'."
+  (let ((new-path (copy-sequence
+                   (if (file-remote-p default-directory)
+                       python-shell-remote-exec-path
+                     exec-path))))
+    (python-shell--add-to-path-with-priority
+     new-path python-shell-exec-path)
+    (if (not python-shell-virtualenv-root)
+        new-path
+      (python-shell--add-to-path-with-priority
+       new-path
+       (list (expand-file-name bin-python-dir python-shell-virtualenv-root)))
+      new-path)))
