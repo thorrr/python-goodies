@@ -41,6 +41,11 @@
                     )))
       (message "Warning: virtualenv not set, not changing rope config"))))
 
+(defun python-goodies/add-virtualenv-setup-to-rope-menu ()
+    ;;add menu item to Rope menu
+  (define-key-after (lookup-key ropemacs-local-keymap [menu-bar Rope])
+    [setup-virtualenv] '("Setup Virtualenv" . rope-set-virtualenv) 'rope-set-virtualenv))
+
 (defun pymacs-reload-rope () 
     "Reload rope"
     (interactive)
