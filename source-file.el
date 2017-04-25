@@ -66,25 +66,28 @@ scope or MyClass = namedtuple(...) are allowed."
   't)
 
 (defun python-source-file-to-completion-process (filename)
-  "send a file to the internal process with the proper directory setup code"
-  (let ((completion-process (python-goodies/get-or-start-completion-process))
-        ;; nasty hack that's not needed on emacs 25 anymore
-        (python-shell-send-setup-code-to-process (lambda (process)
-          "Gallina's python-shell-send-setup-code doesn't allow a process argument"
-          (cl-letf* (((symbol-function 'get-buffer-process) (lambda (_) process)))
-            (python-shell-send-setup-code)
-            process))))
-    (if (not completion-process) (message (format "Warning - completion process is nil for %s" filename))
-      (if (< emacs-major-version 25)
-          (funcall 'python-shell-send-setup-code-to-process completion-process))
-      (send-package-directory filename completion-process)
-      ;; now send the actual code inside filename
-      (python-just-source-file filename completion-process))))
+  ;; our "get process" function must be called from the buffer itself
+  (with-current-buffer (get-file-buffer filename)
+    "send a file to the internal process with the proper directory setup code"
+    (let ((completion-process (python-goodies/get-or-start-completion-process))
+          ;; nasty hack that's not needed on emacs 25 anymore
+          (python-shell-send-setup-code-to-process (lambda (process)
+            "Gallina's python-shell-send-setup-code doesn't allow a process argument"
+            (cl-letf* (((symbol-function 'get-buffer-process) (lambda (_) process)))
+              (python-shell-send-setup-code)
+              process))))
+      (if (not completion-process) (message (format "Warning - completion process is nil for %s" filename))
+        (if (< emacs-major-version 25)
+            (funcall 'python-shell-send-setup-code-to-process completion-process))
+        (send-package-directory filename completion-process)
+        ;; now send the actual code inside filename
+        (python-just-source-file filename completion-process)))))
 
-(defun python-goodies/source-this-file ()
-  (message (format "sourcing %s" (buffer-file-name)))
-  (python-source-file-to-completion-process (buffer-file-name)))
-
-(if auto-python-just-source-file (run-with-idle-timer 2 nil 'python-goodies/source-this-file))
-(if auto-python-just-source-file (add-hook 'after-save-hook 'python-goodies/source-this-file))
+(add-hook 'python-mode-hook (lambda ()
+  (if auto-python-just-source-file
+      (run-with-idle-timer 2 't 'python-source-file-to-completion-process (buffer-file-name)))
+  (if auto-python-just-source-file
+      (add-hook 'after-save-hook (lambda () (python-source-file-to-completion-process (buffer-file-name)))
+                nil 't))))
+  
 
