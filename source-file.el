@@ -81,6 +81,10 @@ scope or MyClass = namedtuple(...) are allowed."
       ;; now send the actual code inside filename
       (python-just-source-file filename completion-process))))
 
-(if auto-python-just-source-file (add-hook 'after-save-hook (lambda ()
-  (python-source-file-to-completion-process (buffer-file-name)))))
+(defun python-goodies/source-this-file ()
+  (message (format "sourcing %s" (buffer-file-name)))
+  (python-source-file-to-completion-process (buffer-file-name)))
+
+(if auto-python-just-source-file (run-with-idle-timer 2 nil 'python-goodies/source-this-file))
+(if auto-python-just-source-file (add-hook 'after-save-hook 'python-goodies/source-this-file))
 
