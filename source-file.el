@@ -84,8 +84,10 @@ scope or MyClass = namedtuple(...) are allowed."
         (python-just-source-file filename completion-process)))))
 
 (add-hook 'python-mode-hook (lambda ()
-  (if auto-python-just-source-file
-      (run-with-idle-timer 2 't 'python-source-file-to-completion-process (buffer-file-name)))
+  ;; source on a timer
+  ;; (if auto-python-just-source-file
+  ;;     (run-with-idle-timer 2 't 'python-source-file-to-completion-process (buffer-file-name)))
+  ;;  or after saves
   (if auto-python-just-source-file
       (add-hook 'after-save-hook (lambda () (python-source-file-to-completion-process (buffer-file-name)))
                 nil 't))))
