@@ -8,7 +8,7 @@
 ;;                    (python "0.25.1")
 ;;                    (cl "0.0.1")
 ;;                    (load-relative "20160716.438")
-;;                    (ac-python-async "20170424")
+;;                    (ac-python-async "20170425")
 ;;                    (flymake "")
 ;;                   )
 ;; Keywords: python
