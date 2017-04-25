@@ -55,7 +55,7 @@ scope or MyClass = namedtuple(...) are allowed."
     (if (not (file-exists-p filename))
         (message (concat "INFO:  not sourcing " filename " because it hasn't been saved yet."))
       (progn
-        (message (format "Sourcing %s into %s" filename process))
+        (message-no-echo (format "Sourcing %s into %s" filename process))
         (send-package-directory filename process)
         (let ((prog-string
                (with-temp-buffer (progn

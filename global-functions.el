@@ -76,3 +76,7 @@ import errors"
      (concat "import sys;\nif sys.path.count('" package-directory "') == 0:\n"
              "  sys.path.insert(0, '" package-directory  "')\n") process)))
 
+(defun message-no-echo (string)
+  (let ((inhibit-read-only t))
+    (with-current-buffer (get-buffer-create "*Messages*")
+      (goto-char (point-max)) (insert string) (insert "\n"))))
