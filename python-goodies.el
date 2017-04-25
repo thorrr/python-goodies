@@ -83,8 +83,8 @@
     ;; clear extra prompts from "source file" (doesn't work)
     ;; (python-shell-send-string "\n" (python-goodies/get-or-start-completion-process))
     (if (check-for-virtualenv (python-goodies/get-or-start-completion-process))
-        (message (concat "Virtualenv successfully activated in completion python process for "
-                         (buffer-file-name))))
+        (message-no-echo (concat "Virtualenv successfully activated in completion python process for "
+                                 (buffer-file-name))))
     (if (check-for-readline (python-goodies/get-or-start-completion-process)) 't
       (message
        "Warning:  readline not detected on system.  "
