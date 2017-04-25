@@ -33,6 +33,12 @@
     (let ((repl-out (python-shell-send-string-no-output "import sys;  hasattr(sys, 'real_prefix')" process)))
       (string= repl-out "True"))))
 
+(defun check-for-readline (process)
+  "return 't if we can import readline.  if we can't autocomplete will be silently broken"
+  (if (not process) (progn (message "warning:  no process in check-for-readline") nil)
+    (let ((repl-out (python-shell-send-string-no-output "import readline;''" process)))
+      (if (string-match "^\\(>>> \\)*''" repl-out) 't nil))))
+
 (defun ldf-compat (current-dir fn-or-subdir)
   "Partial replacement for locate-dominating-file.
 
