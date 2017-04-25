@@ -67,9 +67,9 @@
 	     (if (eq system-type 'cygwin)
 		 (concat "/cygdrive/" (substring filename 0 1) (substring filename 2))
 	       filename))))
-         (set? (set-virtualenv-in-rope-config (funcall find-rope-config-file) python-shell-virtualenv-path)))
+         (set? (set-virtualenv-in-rope-config (funcall find-rope-config-file) python-shell-virtualenv-root)))
     (if (eq set? 'modified) (progn
-        (print (concat "virtualenv " python-shell-virtualenv-path 
+        (print (concat "virtualenv " python-shell-virtualenv-root 
 		       " reset in rope project config, restarting pymacs."))
 	(pymacs-reload-rope)))
     't))

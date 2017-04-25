@@ -1,6 +1,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Virtualenv support
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defvaralias 'python-shell-virtualenv-path 'python-shell-virtualenv-root) ;; -root is emacs25+
 
 (defconst bin-python-dir
   (if (eq system-type 'windows-nt) "Scripts/" "bin/")
@@ -12,7 +13,7 @@
 
 (defun set-virtualenv (dir)
   (interactive "D")
-  (setq python-shell-virtualenv-path (expand-file-name dir))
+  (setq python-shell-virtualenv-root (expand-file-name dir))
   (virtualenv-hook)
   't)
 
@@ -39,17 +40,17 @@
 
 (defun virtualenv-hook ()
   "This should be run before any comints are run.  And re-run when opening a new file."
-  (make-local-variable 'python-shell-virtualenv-path)
+  (make-local-variable 'python-shell-virtualenv-root)
   (if auto-detect-virtualenv
       (let ((detected-virtualenv (detect-virtualenv (buffer-file-name))))
         (if detected-virtualenv
-            (setq python-shell-virtualenv-path detected-virtualenv))))
+            (setq python-shell-virtualenv-root detected-virtualenv))))
   
   ;; finally, if we're using ipython, update the current value of python-shell-interpreter-args
   (if (eq python-inferior-shell-type 'ipython)
       (let ((ipython-script
              (expand-file-name "ipython-script.py"
-                               (format "%s/%s" python-shell-virtualenv-path bin-python-dir))))
+                               (format "%s/%s" python-shell-virtualenv-root bin-python-dir))))
         (if (not (file-exists-p ipython-script))
             (message (concat "Warning:  inferior-shell-type is 'ipython but we can't find "
                              "ipython-script.py in the virtualenv.\nOn Windows make sure "

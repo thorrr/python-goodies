@@ -38,18 +38,18 @@
                (pep8-options-list (split-string python-pep8-options))
                (pylint-options-list (split-string python-pylint-options))
                
-               (virtualenv-python (concat python-shell-virtualenv-path bin-python))
+               (virtualenv-python (concat python-shell-virtualenv-root bin-python))
                ;; bind local var pylint-in-venv so we don't do call-process again and again
                (pylint-installed-in-virtualenv (or (bound-and-true-p python-goodies/_pylint-in-venv)
-                   ;; python-shell-virtualenv-path will be non-nil if we're in a virtualenv
-                     (if python-shell-virtualenv-path
+                   ;; python-shell-virtualenv-root will be non-nil if we're in a virtualenv
+                     (if python-shell-virtualenv-root
                          ;; return our local variable if we've already checked
                          (if (boundp 'python-goodies/_pylint-in-venv) python-goodies/_pylint-in-venv
                            (if (zerop (call-process virtualenv-python nil nil nil python-goodies/pylint-script "-h"))
                                (setq-local python-goodies/_pylint-in-venv 't)
                              (if use-pylint (message (format
                                  "Warning:  pylint not installed in virtualenv %s; package imports won't be detected"
-                                 python-shell-virtualenv-path)))
+                                 python-shell-virtualenv-root)))
                              (setq-local python-goodies/_pylint-in-venv nil)
                              'not-installed-in-virtualenv)))))
                ;; use system python if pylint isn't in the virtualenv
