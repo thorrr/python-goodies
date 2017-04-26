@@ -19,14 +19,6 @@
   (interactive)
   (python-shell-switch-to-shell))
 
-;; This equivalent function doesn't exist in Gallina's code
-;; (defun python-get-named-else-internal-process ()
-;;   "return the current global process if there is one.  Otherwise,
-;; start an internal process and return that."
-;;   (let ((process (or (python-shell-get-process)
-;;                      (python-shell-internal-get-or-create-process))))
-;;     process))
-
 (defun check-for-virtualenv (process)
   "return 't if this process is a virtualenv."
   (if (not process) (progn (message "warning:  no process in check-for-virtualenv") nil)
