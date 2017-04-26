@@ -4,20 +4,52 @@
     `(set (make-local-variable ',var) ,val)))
 
 (defun python-goodies/get-or-start-completion-process ()
-  "To change process name, override (python-shell-get-process-name dedicated)
-   TODO - if virtualenv activated, use same process for all buffers (for efficiency)"
-  (let ((process (python-shell-get-process)))
-    (if (not process)
-        (run-python (python-shell-calculate-command)
-                    't  ;; dedicated
-                    nil ;; show
-                    )
-      process)))
+  "Get a dedicated process for the current buffer.
+
+   Return (python-shell-get-process) if it's not nil.  This means
+   that (run-python) repls will complete if we've started one for
+   the current buffer.
+
+   Otherwise, create a new internal process unique to the buffer
+   or common to the virtualenv if we're in one.
+
+   If there's a virtualenv, reuse an existing process.
+
+   Implementation:
+       Call run-python but override python-shell-make-comint to create an 'internal' buffer.
+       Can't use run-python-internal because setup codes aren't sent."
+  (let ((process (python-shell-get-process))
+        (completion-process
+         (if (boundp 'python-goodies/completion-process) python-goodies/completion-process nil)))
+    (cond (process process)
+          (completion-process completion-process)
+          ('t
+           (let* ((venv-path (if python-shell-virtualenv-root
+                                 python-shell-virtualenv-root
+                               (executable-find "python")))
+                  (venv-hash (secure-hash 'md5 venv-path))
+                  (venv-label (substring venv-hash 0 5)))
+             (cl-letf* (( ;; first, override process-name to be unique per venv
+                         (symbol-function 'python-shell-get-process-name)
+                         (lambda (dedicated) (format "%s [%s]" python-shell-buffer-name venv-label)))
+                     
+                        ;; now override python-shell-make-comint to have "internal" be t
+                        ((symbol-function 'psmc) (symbol-function 'python-shell-make-comint)) ;;original fn
+                        ((symbol-function 'python-shell-make-comint)
+                         (lambda (cmd proc-name &optional show internal)
+                           (psmc cmd proc-name show 't) ;; call original fn but set internal 't
+                           ))
+                        (new-process (run-python (python-shell-calculate-command)
+                                                 't ;; dedicated
+                                                 nil ;; show
+                                                 )))
+               (setq-local python-goodies/completion-process new-process)
+               new-process))))))
 
 (defun python-goodies/switch-to-completion-process ()
   "For debugging"
   (interactive)
-  (python-shell-switch-to-shell))
+  (pop-to-buffer (process-buffer (python-goodies/get-or-start-completion-process))))
 
 (defun check-for-virtualenv (process)
   "return 't if this process is a virtualenv."
