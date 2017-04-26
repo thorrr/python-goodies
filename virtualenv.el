@@ -12,6 +12,9 @@
   "path to the python executable based on emacs architecture")
 
 (defun set-virtualenv (dir)
+  "Must reopen buffers after you run this function.
+
+   If auto-detect-virtualenv is 't, auto-detection will override this global setting. "
   (interactive "D")
   (setq python-shell-virtualenv-root (expand-file-name dir))
   (virtualenv-hook)
