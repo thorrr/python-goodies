@@ -12,6 +12,11 @@
   (setq python-goodies/_eshell-prompt-function-orig eshell-prompt-function)
   ))
 
+(defun python-goodies/_make_clean_path ()
+  (setenv "PATH"
+          (replace-regexp-in-string "/"
+              (if (eq system-type 'windows-nt) "\\\\" "/") eshell-path-env)))
+
 (defun eshell/sv (&optional arg)
   "sv - 'start virtualenv'.  Optionally specify a virtualenv
    directory.  If no directory is specified, attempt to activate a
@@ -30,6 +35,8 @@
         (add-to-list 'exec-path venv-bin-path)
         ;; eshell uses eshell-path-env to resolve executables. -b means add to front of path
         (eshell/addpath "-b" venv-bin-path)
+        ;; the previous function brutally changes PATH.  Clean it up.
+        (python-goodies/_make_clean_path)
         (setq python-goodies/venv-prompt (file-name-base (directory-file-name project-path)))
         (setq eshell-prompt-function (lambda ()
             (concat "(" python-goodies/venv-prompt "-env) " (eshell/pwd) " $ "))))
@@ -42,6 +49,8 @@
   (let* ((eshell-path-list (remove python-shell-virtualenv-path (parse-colon-path eshell-path-env))))
     ;; then join the list back into a single PATH-style string
     (setq eshell-path-env (mapconcat 'identity eshell-path-list path-separator)))
+  ;; unfortunately eshell changes the global PATH for emacs when you do eshell/addpath.  Undo this.
+  (python-goodies/_make_clean_path)
   (delete python-shell-virtualenv-path exec-path)
   (setq python-shell-virtualenv-path nil)
   (setq eshell-prompt-function python-goodies/_eshell-prompt-function-orig)
