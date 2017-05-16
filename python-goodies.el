@@ -38,7 +38,7 @@
 (load-relative "virtualenv.el")
 (load-relative "commands.el")
 (load-relative "hide-show.el")
-(load-relative "eshell.el")
+(load-relative "eshell-support.el")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Global Setup
