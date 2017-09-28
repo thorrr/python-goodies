@@ -53,7 +53,7 @@
   (defun python-shell-send-setup-code-to-process (process)
     "Gallina's python-shell-send-setup-code doesn't allow a buffer
      argument"
-    (cl-letf ((symbol-function 'get-buffer-process) (lambda (_) process))
+    (cl-letf (((symbol-function 'get-buffer-process) (lambda (_) process)))
       (python-shell-send-setup-code)
       process))
 ))
