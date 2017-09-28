@@ -49,6 +49,16 @@
        (cl-delete path ,pathvar :test #'string=)
        (cl-pushnew path ,pathvar :test #'string=)))
   (defalias 'python-shell-calculate-command 'python-shell-parse-command)
+
+  (defun python-shell-send-setup-code-to-process (process)
+    "Gallina's python-shell-send-setup-code doesn't allow a buffer
+     argument"
+    (let* ((orig (symbol-function 'get-buffer-process))
+           (fn (lambda (_) process)))
+      (fset 'get-buffer-process fn)
+      (python-shell-send-setup-code)
+      (fset 'get-buffer-process orig)
+      process))
 ))
 
 
