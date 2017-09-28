@@ -40,6 +40,19 @@
 (load-relative "eshell-support.el")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Compat
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(if (< emacs-major-version 25) (progn
+  (defmacro python-shell--add-to-path-with-priority (pathvar paths)
+    "Modify PATHVAR and ensure PATHS are added only once at beginning."
+    `(dolist (path (reverse ,paths))
+       (cl-delete path ,pathvar :test #'string=)
+       (cl-pushnew path ,pathvar :test #'string=)))
+  (defalias 'python-shell-calculate-command 'python-shell-parse-command)
+))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Global Setup
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (add-hook 'python-mode-hook (lambda ()
