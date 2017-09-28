@@ -4,12 +4,11 @@
 
 ;; Author: Jason Bell <jbellthor@gmail.com>
 ;; Version: 1.0.0
-;; Package-Requires: ((emacs "")
-;;                    (python "")
-;;                    (cl "")
-;;                    (load-relative "")
+;; Package-Requires: ((emacs "0.24.1")
+;;                    cl
+;;                    load-relative
 ;;                    (ac-python-async "20170425")
-;;                    (flymake "")
+;;                    flymake
 ;;                   )
 ;; Keywords: python
 ;; URL: https://github.com/thorrr/python-goodies
