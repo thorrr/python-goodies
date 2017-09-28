@@ -4,10 +4,10 @@
 
 ;; Author: Jason Bell <jbellthor@gmail.com>
 ;; Version: 1.0.0
-;; Package-Requires: ((emacs "24.1")
-;;                    (python "0.25.1")
-;;                    (cl "0.0.1")
-;;                    (load-relative "20160716.438")
+;; Package-Requires: ((emacs "")
+;;                    (python "")
+;;                    (cl "")
+;;                    (load-relative "")
 ;;                    (ac-python-async "20170425")
 ;;                    (flymake "")
 ;;                   )
