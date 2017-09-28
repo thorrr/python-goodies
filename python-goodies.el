@@ -31,7 +31,7 @@
 (load-relative "pymacs-rope.el")
 (load-relative "autocomplete.el")
 (load-relative "flymake-python.el")
-(load-relative "eldoc.el")
+(load-relative "py-eldoc.el")
 (load-relative "source-file.el")
 (load-relative "pdb.el")
 (load-relative "virtualenv.el")
