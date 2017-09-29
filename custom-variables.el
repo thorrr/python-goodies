@@ -30,7 +30,7 @@
 
 (defcustom python-pylint-options  "--output-format=parseable --reports=n\
                                    --extension-pkg-whitelist=numpy\
-                                   --disable=I0011,R0913,C0103,C0302,C0111,W0511,C0325"
+                                   --disable=I0011,R0913,C0103,C0302,C0111,W0511,C0325,R0902,R0903"
   "pylint command line options"
   :type 'string)
 
