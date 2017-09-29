@@ -78,7 +78,7 @@ scope or MyClass = namedtuple(...) are allowed."
               process))))
       (if (not completion-process) (message (format "Warning - completion process is nil for %s" filename))
         (if (< emacs-major-version 25)
-            (funcall 'python-shell-send-setup-code-to-process completion-process))
+            (funcall python-shell-send-setup-code-to-process completion-process))
         (send-package-directory filename completion-process)
         ;; now send the actual code inside filename
         (python-just-source-file filename completion-process)))))

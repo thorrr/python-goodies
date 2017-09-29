@@ -50,12 +50,36 @@
        (cl-pushnew path ,pathvar :test #'string=)))
   (defalias 'python-shell-calculate-command 'python-shell-parse-command)
 
-  (defun python-shell-send-setup-code-to-process (process)
-    "Gallina's python-shell-send-setup-code doesn't allow a buffer
-     argument"
-    (cl-letf (((symbol-function 'get-buffer-process) (lambda (_) process)))
-      (python-shell-send-setup-code)
-      process))
+  ;; the emacs25 version returns the created process 
+  (defun run-python (&optional cmd dedicated show)
+    "Run an inferior Python process.
+  
+  Argument CMD defaults to `python-shell-calculate-command' return
+  value.  When called interactively with `prefix-arg', it allows
+  the user to edit such value and choose whether the interpreter
+  should be DEDICATED for the current buffer.  When numeric prefix
+  arg is other than 0 or 4 do not SHOW.
+  
+  For a given buffer and same values of DEDICATED, if a process is
+  already running for it, it will do nothing.  This means that if
+  the current buffer is using a global process, the user is still
+  able to switch it to use a dedicated one.
+  
+  Runs the hook `inferior-python-mode-hook' after
+  `comint-mode-hook' is run.  (Type \\[describe-mode] in the
+  process buffer for a list of commands.)"
+    (interactive
+     (if current-prefix-arg
+         (list
+          (read-shell-command "Run Python: " (python-shell-calculate-command))
+          (y-or-n-p "Make dedicated process? ")
+          (= (prefix-numeric-value current-prefix-arg) 4))
+       (list (python-shell-calculate-command) nil t)))
+    (get-buffer-process
+     (python-shell-make-comint
+      (or cmd (python-shell-calculate-command))
+      (python-shell-get-process-name dedicated) show)))
+
 ))
 
 
