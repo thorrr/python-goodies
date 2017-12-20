@@ -21,8 +21,8 @@
 
 (defun set-virtualenv-in-rope-config (rope-config-filename virtualenv-dir)
   (let* ((activate-script-name (concat virtualenv-dir bin-python-dir "activate_this.py"))
-         (execfile-line (concat "    execfile(\"" activate-script-name
-                                "\", dict(__file__=\"" activate-script-name "\"))")))
+         (execfile-line (concat "    exec(open(\"" activate-script-name
+                                "\").read(), dict(__file__=\"" activate-script-name "\"))")))
     (if virtualenv-dir (with-temp-buffer
       (insert-file-contents rope-config-filename)
       (goto-char (point-min))
