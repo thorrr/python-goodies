@@ -8,13 +8,14 @@
   :options '(python ipython)
   )
 
+(defconst ipython-str (concat "ipython" (format "%d" python-major-version)))
 
 (defun python-shell-setup (shell-type)
   (if (not (or (eq shell-type 'python) (eq shell-type 'ipython)))
       (error "python-shell-setup must be called with 'python or 'ipython"))
-  (if (and (eq shell-type 'ipython) (executable-find "ipython")) (progn
+  (if (and (eq shell-type 'ipython) (executable-find ipython-str)) (progn
     (message "Changing python-shell-inferior variables to support ipython")
-    (setq python-shell-interpreter "ipython"
+    (setq python-shell-interpreter ipython-str
           python-shell-interpreter-args "")
     ;; don't need the rest of these for new emacs
     (if (< emacs-major-version 25)
@@ -31,10 +32,13 @@
              ")\n")
          )))
     ;; else set regular python mode with some helpful messages if the user wants ipython mode
-    (if (and (eq shell-type 'ipython) (not (executable-find "ipython")))
+    (if (and (eq shell-type 'ipython) (not (executable-find ipython-str)))
         (message "Warning - ipython not installed in python base installation.  Changing shell-type back to 'python")
       (message "Changing python-shell-inferior variables to support python"))
-    (setq python-shell-interpreter (eval (car (get 'python-shell-interpreter 'standard-value)))
+    (setq python-shell-interpreter (concat 
+                                    (eval (car (get 'python-shell-interpreter 'standard-value)))
+                                    (format "%d" python-major-version)
+                                    )
      python-shell-interpreter-args (eval (car (get 'python-shell-interpreter-args 'standard-value))))
     ;; don't need the rest of these for new emacs
     (if (< emacs-major-version 25)
@@ -51,3 +55,6 @@
                  (eval (car (get 'python-shell-completion-string-code 'standard-value)))
                  ")\n"))
      )))
+
+;; cleanup
+(makunbound 'ipython-str)

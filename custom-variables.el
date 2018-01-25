@@ -1,6 +1,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Customizable variables
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defcustom python-major-version 2
+  "Choose correct executable name based on our major version. "
+  :type 'integer
+  :options '(2 3)
+)
+
 (defcustom python-column-width 80
   "Set fill-column to this value in python files.  Also, if using
   pep8, warn when columns exceed this value"

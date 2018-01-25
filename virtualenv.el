@@ -8,7 +8,9 @@
   "root directory of the python executable based on emacs architecture")
 
 (defconst bin-python
-  (concat bin-python-dir (if (eq system-type 'windows-nt)  "python.exe" "python"))
+  (concat bin-python-dir (if (eq system-type 'windows-nt)  
+                             "python.exe" 
+                           (concat "python" (format "%d" python-major-version))))
   "path to the python executable based on emacs architecture")
 
 (defun set-virtualenv (dir)

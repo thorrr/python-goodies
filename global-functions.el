@@ -26,7 +26,7 @@
           ('t
            (let* ((venv-path (if python-shell-virtualenv-root
                                  python-shell-virtualenv-root
-                               (executable-find "python")))
+                               (executable-find (concat "python" (format "%d" python-major-version)))))
                   (venv-hash (secure-hash 'md5 venv-path))
                   (venv-label (substring venv-hash 0 5)))
              (cl-letf* (( ;; first, override process-name to be unique per venv
