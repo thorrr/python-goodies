@@ -15,7 +15,9 @@
       (message "Warning:  pylint executable not found")))
 
 ;; get correct major version
-(defconst python-str (concat "python" (format "%d" python-major-version)))
+(defconst python-str
+  (if (eq system-type 'windows-nt) "python"  ;; windows doesn't have python2/3.exe, simply "python.exe"
+    (concat "python" (format "%d" python-major-version))))
 
 (defun python-goodies/filter-star-builtins (filename)
   "eliminate `from builtins import *` from python file so flymake
