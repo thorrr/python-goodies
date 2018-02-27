@@ -18,8 +18,8 @@
 (defun python-goodies/python-shell-smart-switch ()
   (interactive)
   (let ((saved-point (point))
-	(saved-frame (selected-frame))
-	(saved-window (selected-window)))
+        (saved-frame (selected-frame))
+        (saved-window (selected-window)))
     (if (string= (python-shell-get-process-name t) "Python[*Python*]")
         (end-of-buffer) ;;we are already in the inferior buffer
       (let ((display-buffer-reuse-frames t))
