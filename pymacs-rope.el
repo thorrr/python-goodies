@@ -99,3 +99,4 @@
 (defun python-goodies/rope-go-backward ()
   (interactive)
   (xref-pop-marker-stack))
+
