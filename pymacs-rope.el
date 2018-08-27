@@ -91,5 +91,11 @@
   ;; (add-to-list 'ac-sources 'ac-source-ropemacs)
 )
 
-(defun python-goodies/rope-goto-definition ()(interactive) (xref-push-marker-stack) (rope-goto-definition)) 
-(defun python-goodies/rope-go-backward () (interactive) (xref-pop-marker-stack))
+(defun python-goodies/rope-goto-definition ()
+  (interactive)
+  (xref-push-marker-stack)
+  (rope-goto-definition))
+
+(defun python-goodies/rope-go-backward ()
+  (interactive)
+  (xref-pop-marker-stack))
