@@ -12,7 +12,7 @@
       (concat pymacs-parent-dir "Pymacs" path-separator)
       (concat pymacs-parent-dir "ropemacs" path-separator)
       (concat pymacs-parent-dir "ropemode" path-separator)
-      (concat pymacs-parent-dir "rope")
+      (concat pymacs-parent-dir "rope" (if (getenv "PYTHONPATH") path-separator ""))
       (getenv "PYTHONPATH")))
     (require 'pymacs)
     (setq pymacs-auto-restart 't)
