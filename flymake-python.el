@@ -5,12 +5,18 @@
 ;; run these once globally since they're slow
 (let* ((exe (if (eq system-type 'windows-nt) ".exe" "")))
   (setq python-goodies/pyflakes-exists (if (executable-find (concat "pyflakes" exe)) 't nil))
-  (setq python-goodies/pep8-exists (if (executable-find (concat "pep8" exe)) 't nil))
+  (setq python-goodies/pep8-exists (if (or (executable-find (concat "pycodestyle" exe))
+                                           (executable-find (concat "pep8" exe)) 't nil) 't nil))
+  (setq pep8-exe (cond
+                  ;; prefer pycodestyle if it's installed
+                  ((executable-find (concat "pycodestyle" exe)) "pycodestyle")
+                  ((executable-find (concat "pep8" exe)) "pep8")
+                  ('t nil)))
   (setq python-goodies/pylint-exists (if (executable-find (concat "pylint" exe)) 't nil))
   (if (and python-use-pyflakes (not python-goodies/pyflakes-exists))
       (message "Warning:  pyflakes executable not found"))
   (if (and python-use-pep8 (not python-goodies/pep8-exists))
-      (message "Warning:  pep8 executable not found"))
+      (message "Warning:  pycodestyle or pep8 executable not found"))
   (if (and python-use-pylint (not python-goodies/pylint-exists))
       (message "Warning:  pylint executable not found")))
 
@@ -82,7 +88,7 @@
                      ;; separate if there was a previous command
                      ,@(if (and use-pep8 use-pyflakes) `(,cmd-sep))
                      ;; pep8 command
-                     ,@(if use-pep8 `("pep8" ,@pep8-options-list
+                     ,@(if use-pep8 `(,pep8-exe ,@pep8-options-list
                                       ,(concat "--max-line-length=" (format "%d" python-column-width)) ,local-file))
                      ;; separate again - check for any previous command
                      ,@(if (and use-pylint (or use-pyflakes use-pep8)) `(,cmd-sep))
