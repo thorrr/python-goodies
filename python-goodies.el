@@ -33,33 +33,44 @@
 
 (el-get-bundle ac-python-async
   :url "https://github.com/thorrr/ac-python-async.git")
+
+(use-package ac-python-async
+  :ensure nil  ;; use el-get package)
+
 (el-get-bundle Pymacs
   :url "https://github.com/pinard/Pymacs.git"
   (shell-command-to-string 
    (concat "cd " package-user-dir "Pymacs && make"
            (if (eq system-type 'windows-nt) " && make install" ""))))
-(setq pymacs-parent-dir shared-externals)
+(use-package Pymacs
+  :ensure nil  ;; use el-get package
+  :config
+  (pymacs-parent-dir shared-externals))
 
 (el-get-bundle rope
   :url "https://github.com/python-rope/rope.git"
   (shell-command-to-string 
    (concat "cd " package-user-dir "rope && make"
-           (if (eq system-type 'windows-nt) " && make install" "")))
-  )
+           (if (eq system-type 'windows-nt) " && make install" ""))))
+(use-package rope
+  :ensure nil  ;; use el-get package)
 
 (el-get-bundle ropemacs
   :url "https://github.com/python-rope/ropemacs.git"
   (shell-command-to-string 
    (concat "cd " package-user-dir "ropemacs && make"
-           (if (eq system-type 'windows-nt) " && make install" "")))
-  )
+           (if (eq system-type 'windows-nt) " && make install" ""))))
+(use-package ropemacs
+  :ensure nil  ;; use el-get package)
 
 (el-get-bundle ropemode
   :url "https://github.com/python-rope/ropemode.git"
   (shell-command-to-string 
    (concat "cd " package-user-dir "ropemode && make"
-           (if (eq system-type 'windows-nt) " && make install" "")))
-  )
+           (if (eq system-type 'windows-nt) " && make install" ""))))
+(use-package ropemode
+  :ensure nil  ;; use el-get package)
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Sections
