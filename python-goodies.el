@@ -35,7 +35,8 @@
   :url "https://github.com/thorrr/ac-python-async.git")
 
 (use-package ac-python-async
-  :ensure nil  ;; use el-get package)
+  :ensure nil  ;; use el-get package
+)
 
 (el-get-bundle Pymacs
   :url "https://github.com/pinard/Pymacs.git"
@@ -53,7 +54,8 @@
    (concat "cd " package-user-dir "rope && make"
            (if (eq system-type 'windows-nt) " && make install" ""))))
 (use-package rope
-  :ensure nil  ;; use el-get package)
+  :ensure nil  ;; use el-get package
+)
 
 (el-get-bundle ropemacs
   :url "https://github.com/python-rope/ropemacs.git"
@@ -61,7 +63,8 @@
    (concat "cd " package-user-dir "ropemacs && make"
            (if (eq system-type 'windows-nt) " && make install" ""))))
 (use-package ropemacs
-  :ensure nil  ;; use el-get package)
+  :ensure nil  ;; use el-get package
+)
 
 (el-get-bundle ropemode
   :url "https://github.com/python-rope/ropemode.git"
@@ -69,7 +72,8 @@
    (concat "cd " package-user-dir "ropemode && make"
            (if (eq system-type 'windows-nt) " && make install" ""))))
 (use-package ropemode
-  :ensure nil  ;; use el-get package)
+  :ensure nil  ;; use el-get package
+)
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
