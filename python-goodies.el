@@ -9,6 +9,7 @@
 ;;                    load-relative
 ;;                    (ac-python-async "20170425")
 ;;                    flymake
+;;                    el-get
 ;;                   )
 ;; Keywords: python
 ;; URL: https://github.com/thorrr/python-goodies
@@ -82,6 +83,36 @@
 
 ))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Packages
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(el-get-bundle Pymacs
+  :url "https://github.com/pinard/Pymacs.git"
+  (shell-command-to-string 
+   (concat "cd " package-user-dir "Pymacs && make"
+           (if (eq system-type 'windows-nt) " && make install" ""))))
+(setq pymacs-parent-dir shared-externals)
+
+(el-get-bundle rope
+  :url "https://github.com/python-rope/rope.git"
+  (shell-command-to-string 
+   (concat "cd " package-user-dir "rope && make"
+           (if (eq system-type 'windows-nt) " && make install" "")))
+  )
+
+(el-get-bundle ropemacs
+  :url "https://github.com/python-rope/ropemacs.git"
+  (shell-command-to-string 
+   (concat "cd " package-user-dir "ropemacs && make"
+           (if (eq system-type 'windows-nt) " && make install" "")))
+  )
+
+(el-get-bundle ropemode
+  :url "https://github.com/python-rope/ropemode.git"
+  (shell-command-to-string 
+   (concat "cd " package-user-dir "ropemode && make"
+           (if (eq system-type 'windows-nt) " && make install" "")))
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Global Setup
