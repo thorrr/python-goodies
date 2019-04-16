@@ -43,38 +43,17 @@
   (shell-command-to-string 
    (concat "cd " package-user-dir "Pymacs && make"
            (if (eq system-type 'windows-nt) " && make install" ""))))
-(use-package Pymacs
-  :ensure nil  ;; use el-get package
-  :config
-  (pymacs-parent-dir shared-externals))
+;; can't do use-package because Pymacs and pymacs.el are differently cased
+(setq pymacs-parent-dir shared-externals)
+(require 'pymacs)
 
+;; these don't use (require '<package>) - they're python code specially hooked by pymacs
 (el-get-bundle rope
-  :url "https://github.com/python-rope/rope.git"
-  (shell-command-to-string 
-   (concat "cd " package-user-dir "rope && make"
-           (if (eq system-type 'windows-nt) " && make install" ""))))
-(use-package rope
-  :ensure nil  ;; use el-get package
-)
-
+  :url "https://github.com/python-rope/rope.git")
 (el-get-bundle ropemacs
-  :url "https://github.com/python-rope/ropemacs.git"
-  (shell-command-to-string 
-   (concat "cd " package-user-dir "ropemacs && make"
-           (if (eq system-type 'windows-nt) " && make install" ""))))
-(use-package ropemacs
-  :ensure nil  ;; use el-get package
-)
-
+  :url "https://github.com/python-rope/ropemacs.git")
 (el-get-bundle ropemode
-  :url "https://github.com/python-rope/ropemode.git"
-  (shell-command-to-string 
-   (concat "cd " package-user-dir "ropemode && make"
-           (if (eq system-type 'windows-nt) " && make install" ""))))
-(use-package ropemode
-  :ensure nil  ;; use el-get package
-)
-
+  :url "https://github.com/python-rope/ropemode.git")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Sections
