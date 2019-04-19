@@ -62,20 +62,20 @@
 ;; Sections
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (require 'load-relative)
-(load-relative "custom-variables.el")
-(load-relative "global-functions.el") ;; subsequent modules can depend on these
-(load-relative "keybindings.el")
-(load-relative "inferior-python-shell-setup.el")
-(load-relative "pymacs-rope.el")
-(load-relative "autocomplete.el")
-(load-relative "flymake-python.el")
-(load-relative "py-eldoc.el")
-(load-relative "source-file.el")
-(load-relative "pdb.el")
-(load-relative "virtualenv.el")
-(load-relative "commands.el")
-(load-relative "hide-show.el")
-(load-relative "eshell-support.el")
+(load-relative "custom-variables")
+(load-relative "global-functions") ;; subsequent modules can depend on these
+(load-relative "keybindings")
+(load-relative "inferior-python-shell-setup")
+(load-relative "pymacs-rope")
+(load-relative "autocomplete")
+(load-relative "flymake-python")
+(load-relative "py-eldoc")
+(load-relative "source-file")
+(load-relative "pdb")
+(load-relative "virtualenv")
+(load-relative "commands")
+(load-relative "hide-show")
+(load-relative "eshell-support")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Compat
