@@ -43,9 +43,10 @@
   (shell-command-to-string 
    (concat "cd " package-user-dir "Pymacs && make"
            (if (eq system-type 'windows-nt) " && make install" ""))))
-;; can't do use-package because Pymacs and pymacs.el are differently cased
 (setq pymacs-parent-dir shared-externals)
-(require 'pymacs)
+;; can't do use-package because Pymacs and pymacs.el are differently cased
+;; besides, (require 'pymacs) happens inside pymacs-setup()
+;;(require 'pymacs)
 
 ;; these don't use (require '<package>) - they're python code specially hooked by pymacs
 (el-get-bundle rope
