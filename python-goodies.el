@@ -1,4 +1,4 @@
-;;; python-goodies.el --- customizations of builtin emacs mode
+;;; python-goodies.el --- customizations of builtin emacs mode -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2017 Jason Bell
 
