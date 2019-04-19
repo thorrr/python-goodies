@@ -26,9 +26,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Packages
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(el-get-ensure-byte-compilable-autoload-file el-get-autoload-file)
-(use-package el-get
-  :ensure t)
+(eval-when-compile
+  (require 'cl)
+  (use-package el-get
+    :ensure t))
 
 (el-get-bundle ac-python-async
   :url "https://github.com/thorrr/ac-python-async.git")
@@ -164,8 +165,7 @@
                                  (buffer-file-name))))
     (if (check-for-readline (python-goodies/get-or-start-completion-process)) 't
       (message
-       "Warning:  readline not detected on system.  "
-       "autocomplete from process won't work.\npip install pyreadline to set it up"))))
+       "Warning:  readline not detected on system.\nautocomplete from process won't work.\npip install pyreadline to set it up"))))
 ))
 
 (provide 'python-goodies)
