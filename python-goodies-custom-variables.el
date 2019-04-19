@@ -1,3 +1,5 @@
+;;; custom-variables.el --- public interface for python-goodies  -*- lexical-binding: t -*-
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Customizable variables
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -46,3 +48,5 @@
 
 (defcustom auto-detect-virtualenv nil
   "When loading a python file attempt to find its virtualenv using function detect-virtualenv.")
+
+(provide 'python-goodies-custom-variables)

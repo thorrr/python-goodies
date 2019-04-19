@@ -1,3 +1,4 @@
+;;; pdb.el --- setup python debugger  -*- lexical-binding: t -*-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; PDB
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -9,3 +10,5 @@
   (insert "import pdb; pdb.set_trace()")
   (highlight-lines-matching-regexp "^[ \t]*import i?pdb; i?pdb.set_trace()"))
 (define-key python-mode-map (kbd "C-c C-b") 'python-add-breakpoint)
+
+(provide 'python-goodies-pdb)

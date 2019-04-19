@@ -1,3 +1,4 @@
+;;; virtualenv.el --- virtualenv support  -*- lexical-binding: t -*-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Virtualenv support
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -83,3 +84,5 @@ appends `python-shell-remote-exec-path' instead of `exec-path'."
        new-path
        (list (expand-file-name bin-python-dir python-shell-virtualenv-root)))
       new-path)))
+
+(provide 'python-goodies-virtualenv)

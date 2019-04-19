@@ -1,3 +1,4 @@
+;;; hide-show.el --- apply Git diffs  -*- lexical-binding: t -*-
 ;; add the 'Hide All defs' menu item if we're in hide-show mode
 (defun hide-all-defs ()
   (interactive)
@@ -16,3 +17,4 @@
       (define-key-after (lookup-key hs-minor-mode-map [menu-bar Hide/Show])
         [hide-all-defs] '("Hide All defs" . hide-all-defs) 'hide-all-defs))))
 
+(provide 'python-goodies-hide-show)

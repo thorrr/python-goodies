@@ -1,3 +1,5 @@
+;;; global-functions.el --- utility functions for python-goodies  -*- lexical-binding: t -*-
+
 ;; functions
 (unless (fboundp 'setq-local)
   (defmacro setq-local (var val)
@@ -104,3 +106,5 @@ import errors"
   (let ((inhibit-read-only t))
     (with-current-buffer (get-buffer-create "*Messages*")
       (goto-char (point-max)) (insert string) (insert "\n"))))
+
+(provide 'python-goodies-global-functions)

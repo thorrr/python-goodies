@@ -1,3 +1,4 @@
+;;; commands.el --- python interactive commands  -*- lexical-binding: t -*-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Commands
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -60,3 +61,5 @@
   (interactive "r")
   (kill-new (buffer-substring start end))
   (python-shell-send-string "%paste" nil t))
+
+(provide 'python-goodies-commands)

@@ -1,3 +1,5 @@
+;;; keybindings.el --- python-specific keybindings  -*- lexical-binding: t -*-
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Python specific keybindings
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -23,3 +25,5 @@
   (define-key ropemacs-local-keymap (kbd "M-/") 'hippie-expand)
   (python-goodies/add-virtualenv-setup-to-rope-menu)
 ))
+
+(provide 'python-goodies-keybindings)

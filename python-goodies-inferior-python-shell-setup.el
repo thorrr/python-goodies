@@ -1,3 +1,4 @@
+;;; inferior-python-shell-setup.el --- customize python shells  -*- lexical-binding: t -*-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Inferior Python shell setup variables
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -58,3 +59,5 @@
 
 ;; cleanup
 (makunbound 'ipython-str)
+
+(provide 'python-goodies-inferior-python-shell-setup)

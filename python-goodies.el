@@ -6,7 +6,6 @@
 ;; Version: 1.0.0
 ;; Package-Requires: ((emacs "0.24.1")
 ;;                    cl
-;;                    load-relative
 ;;                    (ac-python-async "20170425")
 ;;                    flymake
 ;;                    el-get
@@ -27,9 +26,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Packages
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(use-package load-relative
-  :ensure t)
-
 (use-package el-get
   :ensure t)
 
@@ -61,21 +57,20 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Sections
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(require 'load-relative)
-(load-relative "custom-variables")
-(load-relative "global-functions") ;; subsequent modules can depend on these
-(load-relative "keybindings")
-(load-relative "inferior-python-shell-setup")
-(load-relative "pymacs-rope")
-(load-relative "autocomplete")
-(load-relative "flymake-python")
-(load-relative "py-eldoc")
-(load-relative "source-file")
-(load-relative "pdb")
-(load-relative "virtualenv")
-(load-relative "commands")
-(load-relative "hide-show")
-(load-relative "eshell-support")
+(require 'python-goodies-custom-variables)
+(require 'python-goodies-global-functions) ;; subsequent modules can depend on these
+(require 'python-goodies-keybindings)
+(require 'python-goodies-inferior-python-shell-setup)
+(require 'python-goodies-pymacs-rope)
+(require 'python-goodies-autocomplete)
+(require 'python-goodies-flymake-python)
+(require 'python-goodies-py-eldoc)
+(require 'python-goodies-source-file)
+(require 'python-goodies-pdb)
+(require 'python-goodies-virtualenv)
+(require 'python-goodies-commands)
+(require 'python-goodies-hide-show)
+(require 'python-goodies-eshell-support)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Compat

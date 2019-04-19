@@ -1,3 +1,4 @@
+;;; source-file.el --- functions to read python files into the live process  -*- lexical-binding: t -*-
 
 (defun python-destroy-side-effects-in-buffer ()
   "In the current buffer get rid of any code that potentially can
@@ -93,3 +94,4 @@ scope or MyClass = namedtuple(...) are allowed."
                 nil 't))))
   
 
+(provide 'python-goodies-source-file)

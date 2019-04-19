@@ -1,3 +1,4 @@
+;;; py-eldoc.el --- setup eldoc for python  -*- lexical-binding: t -*-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; eldoc tweaks
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -7,3 +8,4 @@
   (let ((force-process (python-goodies/get-or-start-completion-process)))
     ad-do-it))
 
+(provide 'python-goodies-py-eldoc)
