@@ -27,9 +27,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Packages
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(use-package load-relative)
+(use-package load-relative
+  :ensure t)
 
-(use-package el-get)
+(use-package el-get
+  :ensure t)
 
 (el-get-bundle ac-python-async
   :url "https://github.com/thorrr/ac-python-async.git")
