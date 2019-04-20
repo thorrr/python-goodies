@@ -1,5 +1,3 @@
-;;; eshell-support.el --- make env work with eshell  -*- lexical-binding: t -*-
-
 (defcustom python-goodies/virtualenv-name
   (if (eq system-type 'windows-nt) "env-win" "env")
   "Try to activate a virtualenv with this name if we don't
@@ -57,5 +55,3 @@
   (setq python-shell-virtualenv-path nil)
   (setq eshell-prompt-function python-goodies/_eshell-prompt-function-orig)
   nil)
-
-(provide 'python-goodies-eshell-support)

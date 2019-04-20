@@ -1,4 +1,3 @@
-;;; flyamke-python.el --- setup flymake with various python linters  -*- lexical-binding: t -*-
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Flymake
 ;;;;;;;;;;;;;;;;;;;;;;;;
@@ -121,5 +120,3 @@
 
 (add-hook 'python-mode-hook (lambda ()
   (add-to-list 'flymake-allowed-file-name-masks '("\\.py\\'" flymake-python-build-cmd-line))))
-
-(provide 'python-goodies-flymake-python)

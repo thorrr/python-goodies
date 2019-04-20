@@ -1,4 +1,3 @@
-;;; pymacs-rope.el --- setup pymacs, rope, and ropemacs  -*- lexical-binding: t -*-
 ;;;;;;;;;;;;;
 ;; Pymacs
 ;;;;;;;;;;;;;
@@ -100,5 +99,3 @@
 (defun python-goodies/rope-go-backward ()
   (interactive)
   (xref-pop-marker-stack))
-
-(provide 'python-goodies-pymacs-rope)

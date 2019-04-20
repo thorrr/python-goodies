@@ -1,4 +1,3 @@
-;;; autocomplete.el --- setup python autocomplete  -*- lexical-binding: t -*-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Autocomplete
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -22,5 +21,3 @@
   (yas-minor-mode)
   (add-to-list 'ac-sources 'ac-source-yasnippet)
 ))
-
-(provide 'python-goodies-autocomplete)
