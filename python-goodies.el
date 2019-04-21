@@ -39,7 +39,10 @@
 
 (use-package ac-python-async
   :ensure nil  ;; use el-get package
-)
+  :init
+  ;; manually install ac-python-async's deps
+  (use-package deferred
+    :ensure t))
 
 (el-get-bundle Pymacs
   :url "https://github.com/pinard/Pymacs.git"
