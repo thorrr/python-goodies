@@ -8,7 +8,6 @@
 ;;                    cl
 ;;                    load-relative
 ;;                    (ac-python-async "20170425")
-;;                    flymake
 ;;                    el-get
 ;;                   )
 ;; Keywords: python
@@ -72,7 +71,7 @@
 (load-relative "inferior-python-shell-setup")
 (load-relative "pymacs-rope")
 (load-relative "autocomplete")
-(load-relative "flymake-python")
+;;(load-relative "flymake-python")
 (load-relative "py-eldoc")
 (load-relative "source-file")
 (load-relative "pdb")
