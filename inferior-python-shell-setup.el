@@ -13,6 +13,11 @@
 (defun python-shell-setup (shell-type)
   (if (not (or (eq shell-type 'python) (eq shell-type 'ipython)))
       (error "python-shell-setup must be called with 'python or 'ipython"))
+  (if (and (eq shell-type 'ipython) (not (executable-find ipython-str)))
+      (progn
+        (message "Warning - ipython not installed in python base installation.  Changing shell-type back to 'python")
+        (setq python-inferior-shell-type 'python)))
+
   (if (and (eq shell-type 'ipython) (executable-find ipython-str)) (progn
     (message "Changing python-shell-inferior variables to support ipython")
     (setq python-shell-interpreter ipython-str
@@ -32,9 +37,7 @@
              ")\n")
          )))
     ;; else set regular python mode with some helpful messages if the user wants ipython mode
-    (if (and (eq shell-type 'ipython) (not (executable-find ipython-str)))
-        (message "Warning - ipython not installed in python base installation.  Changing shell-type back to 'python")
-      (message "Changing python-shell-inferior variables to support python"))
+    (message "Changing python-shell-inferior variables to support python")
     (setq python-shell-interpreter (concat 
                                     (eval (car (get 'python-shell-interpreter 'standard-value)))
                                     (format "%d" python-major-version)
