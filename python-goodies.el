@@ -8,7 +8,6 @@
 ;;                    cl
 ;;                    load-relative
 ;;                    (ac-python-async "20170425")
-;;                    flymake
 ;;                    el-get
 ;;                   )
 ;; Keywords: python
