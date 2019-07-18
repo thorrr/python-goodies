@@ -147,7 +147,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (add-hook 'python-mode-hook (lambda ()
-  ;; (python-shell-setup python-inferior-shell-type)  ;; TODO - make this emacs24 specific
+  (python-shell-setup python-inferior-shell-type)  ;; TODO - make this emacs24 specific
 
   ;; Set up each file's virtualenv before calling python-just-source-file
   (virtualenv-hook)
