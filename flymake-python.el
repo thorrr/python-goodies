@@ -20,11 +20,6 @@
   (if (and python-use-pylint (not python-goodies/pylint-exists))
       (message "Warning:  pylint executable not found")))
 
-;; get correct major version
-(defconst python-str
-  (if (eq system-type 'windows-nt) "python"  ;; windows doesn't have python2/3.exe, simply "python.exe"
-    (concat "python" (format "%d" python-major-version))))
-
 (defun python-goodies/filter-star-builtins (filename)
   "eliminate `from builtins import *` from python file so flymake
    isn't triggered by it"
@@ -49,7 +44,7 @@
                (pep8-options-list (split-string python-pep8-options))
                (pylint-options-list (split-string python-pylint-options))
                
-               (virtualenv-python (concat python-shell-virtualenv-root bin-python))
+               (virtualenv-python (concat python-shell-virtualenv-root (bin-python)))
                ;; bind local var pylint-in-venv so we don't do call-process again and again
                (pylint-installed-in-virtualenv (or (bound-and-true-p python-goodies/_pylint-in-venv)
                    ;; python-shell-virtualenv-root will be non-nil if we're in a virtualenv
@@ -66,7 +61,10 @@
                ;; use system python if pylint isn't in the virtualenv
                (pylint-exe (if (eq pylint-installed-in-virtualenv 't)
                                virtualenv-python
-                             python-str))
+                             ;; else: windows doesn't have python2/3.exe, simply
+                             ;; "python.exe"
+                             (if (eq system-type 'windows-nt) "python"
+                               (concat "python" (format "%d" python-major-version)))))
                ;; Finally, build a command that runs any combination of pyflakes, pep8 and
                ;; pylint.  First argument is the shell to run: bash or cmd.  Second
                ;; argument is a list of arguments to the shell.  For bash it _must_ have

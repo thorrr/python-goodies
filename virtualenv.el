@@ -7,11 +7,11 @@
   (if (eq system-type 'windows-nt) "Scripts/" "bin/")
   "root directory of the python executable based on emacs architecture")
 
-(defconst bin-python
-  (concat bin-python-dir (if (eq system-type 'windows-nt)  
-                             "python.exe" 
-                           (concat "python" (format "%d" python-major-version))))
-  "path to the python executable based on emacs architecture")
+(defun bin-python ()
+    "path to the python executable based on emacs architecture"
+    (concat bin-python-dir (if (eq system-type 'windows-nt)  
+                               "python.exe" 
+                             (concat "python" (format "%d" python-major-version)))))
 
 (defun set-virtualenv (dir)
   "Must reopen buffers after you run this function.
@@ -32,7 +32,7 @@
             (ls (mapcar (lambda (f) (concat cd f)) (directory-files cd)))
             (subdirs (delq nil (mapcar subdir-p ls)))
             (subdirs-that-have-bin/python (delq nil (mapcar (lambda (dir)
-              (if (file-regular-p (concat (file-name-as-directory dir) bin-python))
+              (if (file-regular-p (concat (file-name-as-directory dir) (bin-python)))
                   dir nil))
                  subdirs)))
             (virtualenv-dir (car subdirs-that-have-bin/python))
